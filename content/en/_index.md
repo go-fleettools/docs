@@ -10,9 +10,9 @@ needs and nobody wants to do by hand, and the **landing kit** the go-* landing p
 share. Each tool was built after a wrong answer cost something, and each one's README
 says which.
 
-Everything is Go. Licences are per repository: read the `LICENSE` of the one you
-use (on 2026-10-26 the `fleettools` repository has none detected by GitHub; see its
-page). This page and the ones below are written from each
+Everything is Go. The code is BSD-3-Clause: `mantracheck` found, on 2026-10-26,
+13 repositories with no code under another licence and no cgo signal; the one other
+licence is data (landingkit's Octicons icons, MIT). This page and the ones below are written from each
 repository's README **at its latest tag, read on 2026-10-26**; the tag is named on
 the page, and a repository with no tag says so. Where a README gives no install
 line, the page says that too.
@@ -21,7 +21,7 @@ line, the page says that too.
 
 | Page | Tag | What it answers |
 | --- | --- | --- |
-| [fleettools]({{< relref "repos/fleettools.md" >}}) | v0.40.0 | sweeps across about 1800 repositories: red branches, stopped runners, modules ahead of their tag, foreign judges, tests that never run |
+| [fleettools]({{< relref "repos/fleettools.md" >}}) | v0.40.1 | sweeps across about 1800 repositories: red branches, stopped runners, modules ahead of their tag, foreign judges, tests that never run |
 | [landingkit]({{< relref "repos/landingkit.md" >}}) | v0.12.0 | the landings' shared design, and the commands that derive a brand, verify a landing and check its links |
 | [mutate]({{< relref "repos/mutate.md" >}}) | v0.7.0 | can this test fail? One mutation (`mutate`), or every refusal in a package (`mutsweep`) |
 | [prwait]({{< relref "repos/prwait.md" >}}) | v0.5.0 | are a pull request's checks finished, without calling an empty list a pass |
