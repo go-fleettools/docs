@@ -42,8 +42,8 @@ some of them, for example:
 | `tagscan` | every tagged Go module whose default branch is **ahead of its latest tag**, work that is merged and that `go get` cannot reach. It asks about tags, not releases |
 
 The organisation's profile README (the organisation's own index of the commands,
-which it says "nothing else can find") groups thirty of them by the question they
-answer. It predates part of `cmd/` (about fifty directories at v0.40.0), so the list
+which it says "nothing else can find") groups thirty of the 49 by the question they
+answer. It predates part of `cmd/` (49 directories at v0.40.0, each with a `main.go`, counted on 2026-10-26), so the list
 is not complete:
 
 - **Is the fleet green?** `redscan`, `quietscan` (organisations whose Renovate runner
