@@ -6,8 +6,9 @@ weight: 60
 # modfloor {#modfloor}
 
 The Go toolchain floor a module **declares**, against the floor a fix **requires**.
-[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.2.0**;
-this page is written from its README at that tag.
+[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.3.0**;
+this page is written from its README at that tag. v0.3.0 adds the `modfloor pseudo`
+subcommand, [below](#pseudo).
 
 A repository can be green, released and built with a patched toolchain while still
 shipping a vulnerable floor to everyone downstream. Three pins decide three
@@ -53,6 +54,40 @@ nothing **refuses** rather than reporting a clean fleet.
 Two traps it encodes: `go/version` accepts `go27.2` (a typo that compares above every
 real version), so the floor is validated; and `modfile.ParseLax` does not fill
 `File.Toolchain`, so the directive is recovered from the syntax tree.
+
+## `modfloor pseudo`: dependencies that were never released {#pseudo}
+
+```sh
+modfloor pseudo [--dir DIR] [--input FILE] [--fleet-prefix PREFIX ...]
+```
+
+```sh
+modfloor pseudo --dir ~/Documents/VCS/GIT/github.com/go-llmflow/gateway \
+  --fleet-prefix github.com/go-volumes/ --fleet-prefix github.com/go-authn/
+```
+
+```text
+MODULE                                     VERSION                             FLEET
+github.com/go-volumes/interface            v0.0.0-20261026102434-e5b421ad6fae  FLEET
+google.golang.org/genproto/googleapis/rpc  v0.0.0-20260928230214-8a89bd6388cc
+2 of 120 modules at a pseudo-version, 1 of them the fleet's
+```
+
+It lists every module of a build graph that is required at a **pseudo-version**, that
+is at a commit instead of a tag. It reads `go list -m -json all`, run with
+`GOWORK=off` in `--dir`, or a saved copy given with `--input`. A replaced module is
+judged by what is actually built. Modules matching a `--fleet-prefix` are marked
+`FLEET`; without any prefix, every module counts as the fleet's.
+
+**Why it matters.** A pseudo-version names a commit that semver says nothing about,
+and it stays in the module proxy for ever. On 2026-10-26, go-llmflow/gateway depended
+this way on two fleet modules that had never been tagged.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | no fleet module is at a pseudo-version; third-party modules at one are listed but do not fail the check, because their upstream decides whether to tag |
+| 1 | at least one fleet module is at a pseudo-version |
+| 2 | the graph could not be read; a graph with no dependency also exits 2, since it was not measured |
 
 The README names its siblings: `vulnscan` and `vulngate` for the advisories
 themselves, `gopin` for the CI pin, and `staletools` for installed binaries.
