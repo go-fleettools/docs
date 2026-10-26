@@ -1,0 +1,64 @@
+# go-fleettools documentation — Hugo + Hextra, built like go-llmflow/docs.
+#
+# Each documentation version is a separate build under
+# https://go-fleettools.github.io/docs/<version>/, where <version> is the minor
+# version of the code the pages describe, or "main" while no release is tagged.
+baseURL: "https://go-fleettools.github.io/docs/main/"
+title: "go-fleettools docs"
+
+# themes/hextra is the tannevaled/hextra fork, pinned at a release tag as a
+# submodule.
+theme: hextra
+
+defaultContentLanguage: en
+defaultContentLanguageInSubdir: false
+
+languages:
+  en:
+    label: "English"
+    contentDir: content/en
+    weight: 1
+
+enableRobotsTXT: true
+enableGitInfo: true
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+    parser:
+      attribute:
+        title: true
+        block: true
+  highlight:
+    noClasses: false
+
+# ⛔ The content is NOT under content/en/docs: this site is served AT /docs/.
+# Hextra picks its documentation layout from the section being called "docs",
+# so the type is cascaded instead. "target", not "_target" (deprecated in Hugo
+# 0.156); the build runs with --panicOnWarning.
+cascade:
+  - target:
+      path: "/**"
+    params:
+      type: docs
+
+params:
+  docs:
+    version: "main"
+  description: "go-fleettools: small Go tools that sweep a fleet of repositories, prove that tests can fail, wait for checks without calling silence a pass, and run fuzz targets within a load budget."
+  navbar:
+    displayTitle: true
+    displayLogo: false
+  theme:
+    default: system
+    displayToggle: true
+  footer:
+    enable: true
+    displayCopyright: false
+    displayPoweredBy: false
+  page:
+    width: normal
+  editURL:
+    enable: true
+    base: "https://github.com/go-fleettools/docs/edit/main/content/en"
