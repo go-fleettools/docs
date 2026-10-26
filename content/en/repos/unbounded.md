@@ -7,8 +7,13 @@ weight: 70
 
 **Which repositories read a ZIP entry, or decode an image, without a ceiling?**
 [Repository →](https://github.com/go-fleettools/unbounded) Latest tag: **v0.2.0**;
-this page is written from its README at that tag. The README gives no install line;
-the module is `github.com/go-fleettools/unbounded` and its command is in `cmd/unbounded`.
+this page is written from its README at that tag. The README at that
+tag gives no install line; one was added on `main` on 2026-10-26, after checking that
+it builds (the command is in `cmd/unbounded`, the module root is not a main package):
+
+```sh
+go install github.com/go-fleettools/unbounded/cmd/unbounded@latest
+```
 
 ```sh
 unbounded go-odf go-pdfkit go-gfx     # organisations: listed, cloned, parsed

@@ -8,8 +8,13 @@ weight: 80
 **Which repository already does this?** A live, dated inventory of every
 organisation, because a hand-kept capability map drifts.
 [Repository →](https://github.com/go-fleettools/fleetfind) Latest tag: **v0.2.0**;
-this page is written from its README at that tag. The README gives no install line;
-the module is `github.com/go-fleettools/fleetfind`, with its `main` at the root.
+this page is written from its README at that tag. The README at that
+tag gives no install line; one was added on `main` on 2026-10-26, after checking that
+it builds:
+
+```sh
+go install github.com/go-fleettools/fleetfind@latest
+```
 
 ```sh
 fleetfind -refresh             # ~335 calls, one dated inventory

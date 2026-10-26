@@ -8,8 +8,13 @@ weight: 90
 Which of a set of landing pages is **the odd one out**, by counting what each page
 puts in the shared design system.
 [Repository →](https://github.com/go-fleettools/landingdiff) Latest tag: **v0.2.0**;
-this page is written from its README at that tag. The README gives no install line;
-the module is `github.com/go-fleettools/landingdiff`, with its `main` at the root.
+this page is written from its README at that tag. The README at that
+tag gives no install line; one was added on `main` on 2026-10-26, after checking that
+it builds:
+
+```sh
+go install github.com/go-fleettools/landingdiff@latest
+```
 
 ```sh
 landingdiff ../landing-go-*/layouts/index.html
