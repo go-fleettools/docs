@@ -9,7 +9,8 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped, which modules are ahead of their tag, which
 foreign judges the CI never installs, and which tests exist without ever running.
 [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.40.0**; this page is written from the top of its README at that tag, which is
+**v0.40.1** (which only adds the LICENSE to v0.40.0's code); this page is written
+from the top of its README at v0.40.0, which is
 long (about 430 lines), and from the layout of the repository. Read the README for
 each command.
 
