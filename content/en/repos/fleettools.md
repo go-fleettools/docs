@@ -41,11 +41,29 @@ some of them, for example:
 | `prmerge` | merges dependency pull requests that are mergeable **and** fully green |
 | `tagscan` | every tagged Go module whose default branch is **ahead of its latest tag**, work that is merged and that `go get` cannot reach. It asks about tags, not releases |
 
-Others are mentioned by their sibling repositories, for instance `vulnscan` (runs
-govulncheck across the fleet), `vulngate` (judges one run) and `gopin` (moves the CI
-pin) in the [modfloor]({{< relref "modfloor.md" >}}) page, and `pagespublish`, which
-publishes a documentation version in the workflows of every docs site, this one
-included.
+The organisation's profile README (the organisation's own index of the commands,
+which it says "nothing else can find") groups thirty of them by the question they
+answer. It predates part of `cmd/` (about fifty directories at v0.40.0), so the list
+is not complete:
+
+- **Is the fleet green?** `redscan`, `quietscan` (organisations whose Renovate runner
+  *stopped*: a runner that stops does not fail, it says nothing), `prscan`, `prmerge`,
+  `relverify` (whether a tagged release is what its tag says).
+- **Is what is merged reachable, and is the version right?** `tagscan`, `vscan`,
+  `tagcells`, `gorequires`.
+- **Does the CI actually test it?** `testscan`, `judgescan` (tests that look for an
+  external tool the CI never installs), `covblocks`, `buildscan`, `buildtag`.
+- **Is it safe?** `vulnscan` (which repositories reach a known vulnerability),
+  `vulngate` (the per-repository half), `wfaudit`, `blobpurge`.
+- **Is it advertised, and is the page what it builds?** `docscan` (every repository
+  an organisation has and does not advertise), `pagescheck`, `docsym`, `i18ncheck`.
+- **What does it cost, and on what?** `wasmsize`, `hostload`, `truncspill`, `gvlscan`,
+  `gopin`.
+- **The small ones:** `brief` (runs a command, shows the end of what it said, and
+  keeps its exit status), `unarc`, `modrename`.
+
+`pagespublish` publishes a documentation version in the workflows of every docs site,
+this one included.
 
 ## What is built into them {#built-in}
 
@@ -61,7 +79,7 @@ included.
 
 ## `quietscan` {#quietscan}
 
-The README devotes sections to `quietscan`: "What `quietscan` is, and the five rules
+The README devotes sections to `quietscan`, the sweep for stopped Renovate runners: "What `quietscan` is, and the five rules
 it will not soften", attribution ("the property belongs to whatever COVERS the
 repository"), "A failed call must never become a verdict", "What one pass costs, and
 when not to run it", and "Two things `quietscan` is not". Read them there before
