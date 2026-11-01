@@ -6,9 +6,10 @@ weight: 60
 # modfloor {#modfloor}
 
 The Go toolchain floor a module **declares**, against the floor a fix **requires**.
-[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.3.0**;
-this page is written from its README at that tag. v0.3.0 adds the `modfloor pseudo`
-subcommand, [below](#pseudo).
+[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.4.0**;
+this page is written from its README at that tag. v0.3.0 added the `modfloor pseudo`
+subcommand, [below](#pseudo); v0.4.0 splits the exposure by whether a consumer can
+reach it, [below](#split).
 
 A repository can be green, released and built with a patched toolchain while still
 shipping a vulnerable floor to everyone downstream. Three pins decide three
@@ -54,6 +55,38 @@ nothing **refuses** rather than reporting a clean fleet.
 Two traps it encodes: `go/version` accepts `go27.2` (a typo that compares above every
 real version), so the floor is validated; and `modfile.ParseLax` does not fill
 `File.Toolchain`, so the directive is recovered from the syntax tree.
+
+## The exposure, split by who can reach it {#split}
+
+One number over both populations cannot be prioritised. A module on the proxy
+imposes its floor on everyone who runs `go install`; one that was never published
+imposes it only on somebody building from a clone. Those are a campaign and some
+housekeeping, and until v0.4.0 the report added them together. A third line counts
+the modules whose working tree is already at the floor and whose published module is
+not — the `fixed locally, UNRELEASED` state, where the pull request is merged and the
+work is **not finished**, because the consumer reads the published `go.mod` and not
+the branch. This tool exists because those two differ, so that state is counted by
+name instead of waiting in a `NOTE` column somebody would have to read 939 rows to
+find.
+
+```text
+939 modules declare a floor below 1.27.3 …
+   of those, 904 are PUBLISHED on the proxy (a consumer can install them)
+   and 35 were never published (only a local build honours their floor).
+   and 3 already carry the fix in their working tree but have not been RELEASED…
+```
+
+⛔ Worth saying plainly: the split was added because it **might** have shrunk the
+campaign, and on this fleet it did not — 904 of 939 are installable. A measurement
+earns its place when either answer would change what you do, not only when it gives
+the answer you hoped for, so the README and this page record that it did not help,
+beside the figures.
+
+The counting is a named function rather than four variables inside the printer, so it
+has a test and needs no network. The test plants all five verdicts — including
+`toolchain`, which is **not** an exposure because it fails closed under
+`GOTOOLCHAIN=local` — and asserts that published plus unpublished is the *whole*
+exposure, so a row drifting out of both buckets cannot shrink the campaign silently.
 
 ## `modfloor pseudo`: dependencies that were never released {#pseudo}
 
