@@ -21,7 +21,7 @@ line, the page says that too.
 
 | Page | Tag | What it answers |
 | --- | --- | --- |
-| [fleettools]({{< relref "repos/fleettools.md" >}}) | v0.40.1 | sweeps across about 1800 repositories: red branches, stopped runners, modules ahead of their tag, foreign judges, tests that never run |
+| [fleettools]({{< relref "repos/fleettools.md" >}}) | v0.65.0 | 55 sweeps across about 1800 repositories: red branches, runners that stopped or run and fail, modules ahead of their tag, foreign judges, tests that never run, published pages that are not what the repository builds |
 | [landingkit]({{< relref "repos/landingkit.md" >}}) | v0.12.0 | the landings' shared design, and the commands that derive a brand, verify a landing and check its links |
 | [mutate]({{< relref "repos/mutate.md" >}}) | v0.7.0 | can this test fail? One mutation (`mutate`), or every refusal in a package (`mutsweep`) |
 | [prwait]({{< relref "repos/prwait.md" >}}) | v0.5.0 | are a pull request's checks finished, without calling an empty list a pass |
