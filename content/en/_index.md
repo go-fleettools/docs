@@ -26,7 +26,7 @@ line, the page says that too.
 | [mutate]({{< relref "repos/mutate.md" >}}) | v0.7.0 | can this test fail? One mutation (`mutate`), or every refusal in a package (`mutsweep`) |
 | [prwait]({{< relref "repos/prwait.md" >}}) | v0.5.0 | are a pull request's checks finished, without calling an empty list a pass |
 | [staletools]({{< relref "repos/staletools.md" >}}) | v0.3.0 | which installed Go tools are built with an older toolchain, and which of those parse Go source |
-| [modfloor]({{< relref "repos/modfloor.md" >}}) | v0.6.0 | the Go floor a module declares, against the floor a fix requires, split by whether a consumer can reach it, costed in pull requests rather than findings, with a baseline so the check is a gate and not a permanent red, and which fleet modules are required at a pseudo-version |
+| [modfloor]({{< relref "repos/modfloor.md" >}}) | v0.7.0 | the Go floor a module declares, against the floor a fix requires, split by whether a consumer can reach it, costed in pull requests and grouped by the floor each module declares, with a baseline so the check is a gate and not a permanent red — and one that cannot mistake a clone arriving for a regression — and which fleet modules are required at a pseudo-version |
 | [unbounded]({{< relref "repos/unbounded.md" >}}) | v0.2.0 | which repositories read a ZIP entry or decode an image without a ceiling |
 | [fleetfind]({{< relref "repos/fleetfind.md" >}}) | v0.2.0 | which repository already does this |
 | [landingdiff]({{< relref "repos/landingdiff.md" >}}) | v0.2.0 | which landing page is the odd one out |

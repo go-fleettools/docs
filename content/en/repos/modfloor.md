@@ -6,12 +6,13 @@ weight: 60
 # modfloor {#modfloor}
 
 The Go toolchain floor a module **declares**, against the floor a fix **requires**.
-[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.6.0**;
+[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.7.0**;
 this page is written from its README at that tag. v0.3.0 added the `modfloor pseudo`
 subcommand, [below](#pseudo); v0.4.0 splits the exposure by whether a consumer can
 reach it, [below](#split); v0.5.0 adds `--baseline`, [below](#baseline), and
 corrects the population every earlier figure was counted over; v0.6.0 costs the
-campaign in pull requests, [below](#cost).
+campaign in pull requests, [below](#cost); v0.7.0 groups it by the floor each
+module declares and stops the ratchet calling population growth a regression.
 
 A repository can be green, released and built with a patched toolchain while still
 shipping a vulnerable floor to everyone downstream. Three pins decide three
@@ -121,7 +122,27 @@ several modules of one repository are raised by **one** pull request, because th
 pins turned out to be 123 pull requests — a factor of seven — and an estimate
 seven times too large is an estimate that gets the campaign refused.
 
-⛔ **Here the factor is 1.19, not 7**: 262 modules in 221 repositories. Said
+⛔ **And the size is not the shape.** `gopin --gomod --from X --version Y` names the
+version to move *exactly* — deliberately, because "move anything older" cannot tell a
+stale pin from a deliberate hold, and this fleet has removed a deliberate one as an
+outlier before. So a campaign over modules declaring several floors is **one run per
+floor**, and v0.7.0 says which:
+
+```text
+   they declare 10 different floors, so `gopin --gomod --from X --version
+   1.27.3` is 10 runs and not one:
+      --from 1.27.1  191      --from 1.26.4    4      --from 1.24      1
+      --from 1.27.2   61      --from 1.26.0    1      --from 1.21      1
+      --from 1.27.0    3      --from 1.25      1      --from (none)    3
+      --from 1.27      3
+```
+
+**Two runs cover 252 of the 262.** A module with no directive at all is grouped under
+`(none)`, because `--from` has nothing to match there. The floors are ordered as Go
+versions and never as text, since 1.9 is below 1.10 and this list is read by somebody
+choosing which run to do first.
+
+⛔ **Here the pull-request factor is 1.19, not 7**: 262 modules in 221 repositories. Said
 plainly, because it is the second measurement on this page that did not give the
 answer it was taken for — the first being the published/unpublished split, where
 all 262 turned out installable. The grouping that saved a sibling campaign seven
@@ -156,11 +177,26 @@ the mode it was taken against.
 | another `mode` | `--offline` records what the working trees declare, the default what the proxy serves: different answers about the same modules |
 | `--baseline` **and** `--write-baseline` | recording the answer and then judging it against itself always passes, which is a gate that cannot fail |
 
-And the distinction a subtraction gets wrong: a module that **left the population**
-— clone deleted, renamed, moved out of the owner globs, or simply not walked —
-leaves the exposed set exactly as a repaired module does. It is reported as
-`NOT MEASURED THIS TIME (not a fix)` and counted apart, because adding the two
-together is how a campaign declares victory by losing track of its subjects.
+The file records **every module the run measured**, clean ones included, and says so
+with a `records all` line; a baseline without it (anything v0.6.1 wrote) is refused.
+
+⛔⛔ **The clean ones are the point, and the first version left them out.** It fired
+80 minutes after its own baseline with *"8 module(s) are exposed that the baseline
+did not have"* — every one a repository another session had just cloned, one of them
+appearing on disk a minute before the run, the population growing from 348 modules to
+360. A clone arriving is not the fleet getting worse. And the silent half is the
+dangerous one: with only the exposed set recorded, a module that *was* `ok` and is
+exposed now cannot be told from one never measured, so the real regression would have
+been filed as population growth and the gate would have **passed**.
+
+Four outcomes, and only the first fails a run:
+
+| | |
+| --- | --- |
+| `WORSE` | the baseline measured it and found it **clean**; it is exposed now. **The gate** |
+| `new to the population (not a regression)` | exposed, and the baseline never measured it. Work, but nothing says it was ever clean. ⚠ A repository *created* below the floor arrives this way too, which only a check in its own CI can catch |
+| `fixed` | was exposed, measured again, no longer exposed |
+| `NOT MEASURED THIS TIME (not a fix)` | was exposed and did not appear at all — clone deleted, renamed, out of the owner globs, or simply not walked. A vanished subject looks exactly like a repaired one to anything that only subtracts two sets, and adding them together is how a campaign declares victory by losing track of its subjects |
 
 ⭐ The baseline is also what caught the wrong population above. The report prints
 348 rows and a summary, and nobody reads 348 rows; the baseline writes the exposed
