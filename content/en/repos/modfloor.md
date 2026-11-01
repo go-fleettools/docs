@@ -6,11 +6,12 @@ weight: 60
 # modfloor {#modfloor}
 
 The Go toolchain floor a module **declares**, against the floor a fix **requires**.
-[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.5.0**;
+[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.6.0**;
 this page is written from its README at that tag. v0.3.0 added the `modfloor pseudo`
 subcommand, [below](#pseudo); v0.4.0 splits the exposure by whether a consumer can
 reach it, [below](#split); v0.5.0 adds `--baseline`, [below](#baseline), and
-corrects the population every earlier figure was counted over.
+corrects the population every earlier figure was counted over; v0.6.0 costs the
+campaign in pull requests, [below](#cost).
 
 A repository can be green, released and built with a patched toolchain while still
 shipping a vulnerable floor to everyone downstream. Three pins decide three
@@ -81,11 +82,13 @@ Measured 2026-11-01, with the population printed beside it, because a count is o
 as good as the set it counts over:
 
 ```text
-population: owners go-*,tannevaled — 1779 go.mod seen, 348 kept; set aside:
-410 out of scope, 43 in no work tree, 540 published by another project,
+population: owners go-*,tannevaled — 1789 go.mod seen, 348 kept; set aside:
+410 out of scope, 44 in no work tree, 540 published by another project,
 0 without a module directive, 0 unreadable
 348 modules against floor 1.27.3:  ok=86  BELOW=260  no-go=2
 ⛔ 262 modules declare a floor below 1.27.3 …
+   they live in 221 repositories, so the campaign is about 221 pull requests
+   and not 262.
    of those, 262 are PUBLISHED on the proxy (a consumer can install them)
    and 0 were never published.
    and 6 already carry the fix in their working tree but have not been RELEASED…
@@ -109,6 +112,26 @@ has a test and needs no network. The test plants all five verdicts — including
 `toolchain`, which is **not** an exposure because it fails closed under
 `GOTOOLCHAIN=local` — and asserts that published plus unpublished is the *whole*
 exposure, so a row drifting out of both buckets cannot shrink the campaign silently.
+
+## A campaign is costed in pull requests, not in findings {#cost}
+
+⛔ "262 modules below the floor" reads as 262 pieces of work, and it is not:
+several modules of one repository are raised by **one** pull request, because the
+`go` directives they declare land together. On a sibling campaign 896 stale CI
+pins turned out to be 123 pull requests — a factor of seven — and an estimate
+seven times too large is an estimate that gets the campaign refused.
+
+⛔ **Here the factor is 1.19, not 7**: 262 modules in 221 repositories. Said
+plainly, because it is the second measurement on this page that did not give the
+answer it was taken for — the first being the published/unpublished split, where
+all 262 turned out installable. The grouping that saved a sibling campaign seven
+eighths of its work saves this one nothing much, and **221 pull requests** is the
+real number to decide about.
+
+A module named as a positional argument has no work tree, so there is no
+repository to credit it to: those are counted apart rather than folded into the
+estimate, since a module that was not found on disk is one we may not be able to
+push to at all.
 
 ## `--baseline`: a gate for a campaign that cannot be finished in one day {#baseline}
 
