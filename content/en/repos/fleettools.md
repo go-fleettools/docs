@@ -9,7 +9,7 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.65.0**; this page is written from the repository at that tag — the command
+**v0.67.0**; this page is written from the repository at that tag — the command
 inventory under `cmd/`, the README's own sections, and each new command's doc comment.
 The README is about 610 lines and describes every command in its own words; read it
 there.
@@ -18,11 +18,11 @@ The sweeps were written on 2026-08-30 while getting every default branch green, 
 the README says why each one is built the way it is. The repository has **one
 directory per sweep under `cmd/`**; the module is
 `github.com/go-fleettools/fleettools`, and a command is installed the way Go installs
-tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0.65.0`).
+tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0.67.0`).
 
 ## The commands {#commands}
 
-**55 directories under `cmd/`** at v0.65.0, each with a `main.go` (counted
+**55 directories under `cmd/`** at v0.67.0, each with a `main.go` (counted
 2026-11-01):
 
 ```text
@@ -86,6 +86,24 @@ Grouped by the question they answer:
   budget stop is waited out.
 - **The secondary rate limit is not visible to `rate_limit`** — measured 2026-10-10,
   `gh` answered 403 on every call while the budget read 5000/5000.
+
+⛔ **And two of them were blind to this fleet's own pages until v0.67.0**, which is
+the same failure one level up: a tool that is right about its rules and cannot read
+the subject answers confidently anyway.
+
+- `tagcells` keeps the version a page states equal to each module's latest release.
+  It looked for `[[params.modules]]` with `tag = "vX.Y.Z"`; the go-* landings are
+  `[[params.repos]]` with `label =`. Against `go-fleettools.github.io/hugo.toml` it
+  answered `0 cell(s)` and exited **2** — rightly refusing to call nothing a pass, and
+  the reason thirteen labels dated in a comment above them had never been checked.
+  When it first could look, **three of the thirteen were stale** and `fleettools`'
+  own was twenty-seven releases behind.
+- `pagetext` reported text **missing** on a page that carried it, six retries running,
+  because of an apostrophe: Hugo prints `fleet’s` where the source said `fleet's`, and
+  the match decoded entities but not typographic punctuation. Every English possessive
+  and contraction was a false negative. A verification tool that says "not published
+  yet" about something published is worse than none — the next person reads a real
+  failure the same way.
 
 ## Flags: one dash became two {#flags}
 
