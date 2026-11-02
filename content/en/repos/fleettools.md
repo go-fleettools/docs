@@ -64,7 +64,15 @@ Grouped by the question they answer:
   `sitemigrate`, `landingmigrate`, `docsversions` (every published version of a
   versioned site built with **one** look — the default branch's), `mdpdf`.
 - **What does it cost, and on what?** `wasmsize`, `hostload`, `abbench`, `truncspill`,
-  `gvlscan`, `gopin`, `qemufix`.
+  `gvlscan`, `gopin`, `qemufix`. Since v0.71.0 `abbench` also runs on macOS and can
+  compare two sub-benchmarks of one binary: `--max-load F --wait D` waits for the
+  1-minute load to be at most F before each round and **discards a round's pair** when
+  the load after it is above F, so the two series stay paired; `--base-arg` and
+  `--head-arg` add arguments to one side, and `--rename-base` / `--rename-head` give
+  the two sub-benchmarks one name so that `benchstat base.txt head.txt` compares them
+  (benchstat keys rows by full name). The load reading is the public package
+  `github.com/go-fleettools/fleettools/loadavg` (`Avg1`, `Wait`), also used by
+  `go-llmflow/bench`'s `gwbench`.
 - **Comparing artefacts.** `treecmp` (byte for byte), `pngeq` (the same *pixels*, because
   "65 of 73 files differ" on a moved brand kit was false — 51 PNGs, 0 channel values
   different).
