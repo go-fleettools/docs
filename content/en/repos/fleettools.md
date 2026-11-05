@@ -22,29 +22,47 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**55 directories under `cmd/`** at v0.67.0, each with a `main.go` (counted
-2026-11-01):
+**59 directories under `cmd/`** at v0.78.0, each with a `main.go` (counted
+2026-11-05 by listing `cmd/` on the tagged commit, `abf3a287`):
 
 ```text
-abbench blobpurge brandcheck brief buildscan buildtag clonescan covblocks cronscan
-docscan docscheck docsversions docsym flagcensus glmerge gofloor gopin gorequires
-gvlscan hostload i18ncheck judgescan landingmigrate langcheck mantracheck mdpdf
-mkdocs2hextra modrename needread pagescheck pagespublish pagesretire pagetext pinscan
-pngeq prmerge prscan qemufix quietscan redscan relverify sitelinks sitemigrate symfind
-tagcells tagscan testscan treecmp truncspill unarc vscan vulngate vulnscan wasmsize
-wfaudit
+abbench blobpurge branchscan brandcheck brief buildscan buildtag bzcomment clonescan
+covblocks cronscan docscan docscheck docsversions docsym flagcensus glmerge gofloor
+gopin gorequires gvlscan hostload i18ncheck judgescan landingmigrate langcheck
+linkcheck mantracheck mdpdf mkdocs2hextra modrename needread pagescheck pagespublish
+pagesretire pagetext pinscan pngeq prmerge prrefresh prscan qemufix quietscan redscan
+relverify sitelinks sitemigrate symfind tagcells tagscan testscan treecmp truncspill
+unarc vscan vulngate vulnscan wasmsize wfaudit
 ```
+
+The four added since v0.67.0 are `branchscan`, `bzcomment`, `linkcheck` and
+`prrefresh`. The page said **55** for four days while the repository held more,
+which is the ordinary way a count on a page goes wrong: nothing recounts it,
+and 55 is a number a reader has no way to doubt.
 
 Grouped by the question they answer:
 
 - **Is the fleet green?** `redscan` (every default branch whose last run failed — a red
   branch is not a broken one, check *when* it last ran), `quietscan`, `prscan`,
   `prmerge`, `glmerge` (the GitLab side), `relverify`, `cronscan`.
+- **Can this pull request still go green?** `prrefresh` (updates a pull request branch
+  with its base and names the ones it **could not** — a pull request in conflict with
+  its base gets *no workflow run at all*, not a failing one, so it keeps its last green
+  and reads as ready). It sends `expected_head_sha`, so it refuses rather than merges
+  into a head that moved under it, and it treats GitHub's `mergeable: null` as *"the
+  background job has not finished"* rather than as a refusal — reading `null` as `false`
+  reports a conflict for every pull request asked about too soon.
 - **Is what is merged reachable, and is the version right?** `tagscan` (a module whose
   branch is ahead of its latest tag: work that is merged and `go get` cannot reach — it
   asks about **tags**, not releases), `vscan` (what the next version should be, derived
   from the public API with `gorelease`, once per GOOS), `tagcells`, `gorequires`,
   `pinscan`, `modrename`.
+- **Is there work nobody can find?** `branchscan` (branches holding commits the default
+  branch does not have that **no pull request was ever opened for**). Such a branch is
+  invisible to `gh pr list` and to any backlog that tracks issues, so it does not read
+  as abandoned — it reads as absent, and the work gets done a second time. The cousin of
+  `tagscan`: that one finds work merged and unreachable, this one finds work nobody
+  ever saw.
 - **Does the CI actually test it?** `testscan`, `judgescan` (tests that look for an
   external tool the CI never installs — a foreign judge that exists in the source and
   has never once run), `covblocks` (the blocks a coverage profile never entered, because
@@ -59,7 +77,14 @@ Grouped by the question they answer:
   generator a published URL was built with), `pagescheck` (whether a Pages site serves
   what its repository builds), `pagetext` (whether a published page now carries the text
   we wrote), `sitelinks` (whether every local link of a built site leads to a file of
-  that build), `docsym`, `i18ncheck`, `langcheck`, `mantracheck`, `brandcheck`.
+  that build), `linkcheck` (whether every **external** link a documentation source names
+  still resolves — it replaced the `grep`/`sed`/`curl` the documentation workflows
+  carried, which failed twice on random 504s from github.com and passed on the third
+  run), `docsym`, `i18ncheck`, `langcheck`, `mantracheck`, `brandcheck`.
+- **Speaking to something that is not GitHub.** `bzcomment` posts one comment to a
+  Bugzilla bug through its REST API, showing which bug and which account it is about to
+  speak for first. It exists so a session can contribute upstream without the API key
+  ever passing through a URL, an argument vector, the environment or a log.
 - **Publishing the documentation.** `pagespublish`, `pagesretire`, `mkdocs2hextra`,
   `sitemigrate`, `landingmigrate`, `docsversions` (every published version of a
   versioned site built with **one** look — the default branch's), `mdpdf`.
