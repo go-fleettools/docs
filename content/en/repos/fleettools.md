@@ -9,8 +9,9 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.81.2** (`4bc11f15`, 2026-11-07, measured the same day). The prose below was
-written from the repository at **v0.67.0** — the command inventory under `cmd/`,
+**v0.82.1** (`c071038`, 2026-11-07, measured the same day). The prose below was
+written from the repository at **v0.67.0**, plus the two v0.82.x sections at the
+end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
 apart on purpose: *which tag is current* and *which tag this page describes* are
 different facts, and writing one where the other belongs is how a page comes to
@@ -159,6 +160,52 @@ every one of those would have been refused: a single-dash compatibility shim in
 `internal/cli` rewrites the old spelling and warns, which is why there was no flag day.
 `cmd/flagcensus` is the measurement that drove it — 54 commands, 144 flags, 137 of
 which needed the second dash.
+
+⛔⛔ **And this repository's own workflows kept typing one dash for another year's
+worth of runs.** v0.82.1 fixed **eight call sites** in two files — `vulngate -go`,
+`vulnscan -selftest` twice, three more `vulnscan` lines, and `brandcheck -org` —
+every one of them invoking a binary built from that very tree, so cobra, so the
+shim was the only thing making them work. The shim prints a warning on every run
+and announces its own removal: **a warning inside a green lane is a warning nobody
+reads**, and the day the shim goes those lanes fail for a reason unrelated to
+anything they measure.
+
+Seven were found by another session and routed here through two lease notes. The
+**eighth** was found by the test written for the other seven, on its first run, in
+a file nobody had looked at — `TestNoWorkflowCallsOurOwnCommandsWithASingleDash`,
+which enumerates `cmd/` rather than naming the commands, refuses to run if it sees
+no workflow or implausibly few commands, scans only *after* the command's own token
+(so `go build -o /tmp/vulnscan` is not a call), and skips comments — its first
+version flagged a line of prose describing a hole its author had already removed,
+and refusing what the protected thing accepts is a defect of the same rank as
+missing one. `modfloor` v0.8.1 carries the narrow version of the same gate, because
+its security lane had the defect too.
+
+## The reusable workflows {#reusable}
+
+Three checks here are **called by** the repository they guard, so they fail where
+the change is made rather than in a report nobody opens — nine lines in the caller,
+and ⛔ not `on: [push, pull_request]`, which both fire for a branch with a pull
+request open and doubled every run on the first three organisations that copied the
+snippet.
+
+| | |
+| --- | --- |
+| `docs-current.yml` | does this organisation advertise what it has? Needs no secret: listing a public organisation is a public read |
+| `brand-complete.yml` | does a brand repository carry what its README promises? Written because a brand repository has nothing to compile, so it had no checks at all and `ghmerge` rightly refused its pull requests |
+| `go-floor.yml` (v0.82.0) | does this branch declare a `go` directive at or above the fleet's floor? |
+
+⛔ `go-floor.yml` exists because the fleet-wide sweep **structurally cannot** catch
+its case. `modfloor --baseline` answers *did anything get worse*, and a repository
+*created* below the floor arrives as `new to the population`, where nothing says
+whether it was ever clean. Measured over the five days to 2026-11-07: **0 regressed,
+14 fixed, 61 arrived exposed** — the fleet's exposure went 262 → 314 without one
+regression. Its `floor:` input is **required**, because a default would move under
+every caller with no commit to review, which is the `go-version: stable` defect this
+fleet spent a campaign removing; it pins the judging tool to a **tag** rather than a
+branch, since a gate that fails builds must not change what hundreds of repositories
+are held to with nothing reviewed; and `--offline` means it reads the working tree,
+so there is no API call and no secret.
 
 ## `quietscan` {#quietscan}
 
