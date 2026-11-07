@@ -9,7 +9,7 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.82.1** (`c071038`, 2026-11-07, measured the same day). The prose below was
+**v0.84.0** (`06dfd81`, 2026-11-07, measured the same day). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections at the
 end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
@@ -26,8 +26,9 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**64 directories under `cmd/`** at v0.81.2, each with a `main.go` (counted
-2026-11-07 by listing `cmd/` on the tagged commit, `4bc11f15`):
+**65 directories under `cmd/`**, each with a `main.go` (counted 2026-11-07 with
+`go list ./cmd/...` on `06dfd81`, the commit that merged the 65th; it was 64 at
+v0.81.2, counted the same day on `4bc11f15`):
 
 ```text
 abbench blobpurge branchscan brandcheck brief buildscan buildtag bzcomment clonescan
@@ -35,14 +36,14 @@ covblocks cronscan docscan docscheck docsversions docsym flagcensus fleetverbs g
 glmerge gofloor gopin gorequires gvlscan hostload i18ncheck judgescan landingmigrate
 langcheck linkcheck mantracheck mdpdf mkdocs2hextra modrename needread pagesbuild
 pagesbuildadd pagesbuildcampaign pagescheck pagespublish pagesretire pagetext pinscan
-pngeq prmerge prrefresh prscan qemufix quietscan redscan relverify sitelinks
+pngeq priorart prmerge prrefresh prscan qemufix quietscan redscan relverify sitelinks
 sitemigrate symfind tagcells tagscan testscan treecmp truncspill unarc vscan vulngate
 vulnscan wasmsize wfaudit
 ```
 
-The five added since v0.78.0 are `fleetverbs`, `ghissue`, `pagesbuild`,
-`pagesbuildadd` and `pagesbuildcampaign`; the four added before them, since
-v0.67.0, were `branchscan`, `bzcomment`, `linkcheck` and `prrefresh`.
+The six added since v0.78.0 are `fleetverbs`, `ghissue`, `pagesbuild`,
+`pagesbuildadd`, `pagesbuildcampaign` and `priorart`; the four added before them,
+since v0.67.0, were `branchscan`, `bzcomment`, `linkcheck` and `prrefresh`.
 
 ⛔ **This count has now gone stale twice**, which is worth keeping on the page
 rather than quietly correcting. It said **55** for four days, then **59** against
@@ -75,7 +76,21 @@ Grouped by the question they answer:
   invisible to `gh pr list` and to any backlog that tracks issues, so it does not read
   as abandoned — it reads as absent, and the work gets done a second time. The cousin of
   `tagscan`: that one finds work merged and unreachable, this one finds work nobody
-  ever saw.
+  ever saw. `priorart` asks the same question from the other end, about a **subject**
+  rather than a population, and *before* the work starts: given a repository and a
+  subject it reads the branches — by name **and** head-commit subject, since a branch
+  is named for its mechanism and its commit written for its cause — and the issues and
+  pull requests, **open and closed**, and exits non-zero when the subject is already
+  covered. No `is:open` qualifier, deliberately: a closed "not merged, and here is
+  why" is the most valuable prior art there is. It exists because three pieces of work
+  were redone on one repository in a single day while "search the tracker first" was
+  already written down as a rule — the thought arrives as *let me fix this*, never as
+  *let me check whether this is fixed*, so the check runs instead of being remembered.
+  A surface it could not read holds the gate shut (status 2), including a GraphQL
+  refusal, which arrives as HTTP 200 with an `errors` array: read past that and a
+  refused query becomes an empty branch list, which is a clean gate on a surface never
+  read. It keeps the search's own ranking, because a scoring pass of its own was
+  measured against it and came out worse.
 - **Does the CI actually test it?** `testscan`, `judgescan` (tests that look for an
   external tool the CI never installs — a foreign judge that exists in the source and
   has never once run), `covblocks` (the blocks a coverage profile never entered, because
