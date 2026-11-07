@@ -9,36 +9,48 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.67.0**; this page is written from the repository at that tag — the command
-inventory under `cmd/`, the README's own sections, and each new command's doc comment.
-The README is about 610 lines and describes every command in its own words; read it
-there.
+**v0.81.2** (`4bc11f15`, 2026-11-07, measured the same day). The prose below was
+written from the repository at **v0.67.0** — the command inventory under `cmd/`,
+the README's own sections, and each new command's doc comment — and the two are kept
+apart on purpose: *which tag is current* and *which tag this page describes* are
+different facts, and writing one where the other belongs is how a page comes to
+assert a version it was never checked against. The README is about 610 lines and
+describes every command in its own words; read it there.
 
 The sweeps were written on 2026-08-30 while getting every default branch green, and
 the README says why each one is built the way it is. The repository has **one
 directory per sweep under `cmd/`**; the module is
 `github.com/go-fleettools/fleettools`, and a command is installed the way Go installs
-tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0.67.0`).
+tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0.81.2`).
 
 ## The commands {#commands}
 
-**59 directories under `cmd/`** at v0.78.0, each with a `main.go` (counted
-2026-11-05 by listing `cmd/` on the tagged commit, `abf3a287`):
+**64 directories under `cmd/`** at v0.81.2, each with a `main.go` (counted
+2026-11-07 by listing `cmd/` on the tagged commit, `4bc11f15`):
 
 ```text
 abbench blobpurge branchscan brandcheck brief buildscan buildtag bzcomment clonescan
-covblocks cronscan docscan docscheck docsversions docsym flagcensus glmerge gofloor
-gopin gorequires gvlscan hostload i18ncheck judgescan landingmigrate langcheck
-linkcheck mantracheck mdpdf mkdocs2hextra modrename needread pagescheck pagespublish
-pagesretire pagetext pinscan pngeq prmerge prrefresh prscan qemufix quietscan redscan
-relverify sitelinks sitemigrate symfind tagcells tagscan testscan treecmp truncspill
-unarc vscan vulngate vulnscan wasmsize wfaudit
+covblocks cronscan docscan docscheck docsversions docsym flagcensus fleetverbs ghissue
+glmerge gofloor gopin gorequires gvlscan hostload i18ncheck judgescan landingmigrate
+langcheck linkcheck mantracheck mdpdf mkdocs2hextra modrename needread pagesbuild
+pagesbuildadd pagesbuildcampaign pagescheck pagespublish pagesretire pagetext pinscan
+pngeq prmerge prrefresh prscan qemufix quietscan redscan relverify sitelinks
+sitemigrate symfind tagcells tagscan testscan treecmp truncspill unarc vscan vulngate
+vulnscan wasmsize wfaudit
 ```
 
-The four added since v0.67.0 are `branchscan`, `bzcomment`, `linkcheck` and
-`prrefresh`. The page said **55** for four days while the repository held more,
-which is the ordinary way a count on a page goes wrong: nothing recounts it,
-and 55 is a number a reader has no way to doubt.
+The five added since v0.78.0 are `fleetverbs`, `ghissue`, `pagesbuild`,
+`pagesbuildadd` and `pagesbuildcampaign`; the four added before them, since
+v0.67.0, were `branchscan`, `bzcomment`, `linkcheck` and `prrefresh`.
+
+⛔ **This count has now gone stale twice**, which is worth keeping on the page
+rather than quietly correcting. It said **55** for four days, then **59** against
+a repository that held 64 — and each time nothing recounted it, because a number
+on a page is something a reader has no way to doubt. The remedy that works is the
+one used here: cite the **commit** the count was taken on, so the claim carries
+its own expiry. `docsversions` is the tool for the version a page claims, and
+`docscan -fail-on-drift` reported **0 drift** throughout both episodes — correctly
+by its own definition, and blind to a version asserted in prose.
 
 Grouped by the question they answer:
 
@@ -150,14 +162,26 @@ which needed the second dash.
 
 ## `quietscan` {#quietscan}
 
-`quietscan` is every organisation whose Renovate runner has **stopped**, *or* **runs
-and fails**. `redscan` asks whether the last run failed; a runner that stopped does not
-fail, it says nothing — so this asks *when* it last ran, and then what became of it.
-**Sixteen runners were once reported healthy while every nightly run failed in ten
-seconds**, which is the second half the README added.
+`quietscan` is every organisation whose Renovate runner has **stopped**, **runs
+and fails**, or **asks for a secret that does not exist**. `redscan` asks whether the
+last run failed; a runner that stopped does not fail, it says nothing — so this asks
+*when* it last ran, and then what became of it. **Sixteen runners were once reported
+healthy while every nightly run failed in ten seconds**, which is the second half the
+README added.
 
-The README devotes sections to it: "What `quietscan` is, and the **six** rules it will
-not soften", attribution ("the property belongs to whatever COVERS the repository"),
+Since v0.66.0 it also reads the secrets a workflow *references* against the ones that
+exist and reports `missing_secret` with the name, because the sixteen were all one
+absent `RENOVATE_TOKEN` and an unset secret expands to the empty string — so the
+action runs with nothing there and fails in ten seconds, which reads as *activity* to
+any check that only asks whether runs happen. That check cannot live inside the
+workflow: GitHub's documentation states that secrets cannot be referenced in `if:`
+conditionals, and the documented workaround would put a credential in an environment
+variable to learn something that needs no value. It found its first real one on
+2026-11-07 — a runner created six days earlier whose secret was never placed, caught
+in a day rather than the ten the sixteen took.
+
+The README devotes sections to it: "What `quietscan` is, and the **seven** rules it
+will not soften", attribution ("the property belongs to whatever COVERS the repository"),
 "The trap `quietscan` exists to catch before it latches", "A failed call must never
 become a verdict", "What one pass costs, and when not to run it", and "Two things
 `quietscan` is not". Read them there before scheduling it beside another sweep.
