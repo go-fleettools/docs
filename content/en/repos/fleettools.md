@@ -247,3 +247,20 @@ will not soften", attribution ("the property belongs to whatever COVERS the repo
 "The trap `quietscan` exists to catch before it latches", "A failed call must never
 become a verdict", "What one pass costs, and when not to run it", and "Two things
 `quietscan` is not". Read them there before scheduling it beside another sweep.
+
+## `openfixed`: open issues a merged pull request already addressed {#openfixed}
+
+`openfixed --org A --org B` (or `--owner`) lists **open issues that a merged pull
+request already addressed**, so they can be closed. For each owner it searches open
+issues (the ones with a closing reference, `linked:pr`, first) and reads each issue's
+timeline once. **CLOSABLE** means a merged pull request referenced the issue with a
+closing keyword (or the timeline records it as *connected*) yet it is open; **REVIEW**
+means a merged pull request mentioned it without a keyword, or the issue was reopened
+after the merge, so a person decides. Issues whose pull requests are all unmerged are
+not listed. The report states its denominator per owner (issues searched, timelines
+read, issues skipped and why) and exits 2 if anything was skipped: a scan that could
+not read is never reported as zero. It is a dry run by default; `--close` closes only
+CLOSABLE issues, with a comment naming the pull request, and never a REVIEW one. It
+stops before the REST budget falls under `--margin` (default 1000) so the fleet's
+Renovate runners are not starved, and it paces the search API. Written against GitHub's
+documented search qualifiers, the issue timeline events and the closing-keyword rules.
