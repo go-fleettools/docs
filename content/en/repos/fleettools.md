@@ -26,24 +26,26 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**65 directories under `cmd/`**, each with a `main.go` (counted 2026-11-07 with
-`go list ./cmd/...` on `06dfd81`, the commit that merged the 65th; it was 64 at
-v0.81.2, counted the same day on `4bc11f15`):
+**72 directories under `cmd/`**, each with a `main.go` (counted 2026-11-09 with
+`git ls-tree cmd/` on `5d0fae1`, the released head of v0.94.0; it was 65 on
+2026-11-07 at `06dfd81`, and 64 at v0.81.2):
 
 ```text
 abbench blobpurge branchscan brandcheck brief buildscan buildtag bzcomment clonescan
 covblocks cronscan docscan docscheck docsversions docsym flagcensus fleetverbs ghissue
-glmerge gofloor gopin gorequires gvlscan hostload i18ncheck judgescan landingmigrate
-langcheck linkcheck mantracheck mdpdf mkdocs2hextra modrename needread pagesbuild
-pagesbuildadd pagesbuildcampaign pagescheck pagespublish pagesretire pagetext pinscan
-pngeq priorart prmerge prrefresh prscan qemufix quietscan redscan relverify sitelinks
-sitemigrate symfind tagcells tagscan testscan treecmp truncspill unarc vscan vulngate
-vulnscan wasmsize wfaudit
+ghpr ghrel ghrepo ghrun glmerge gofloor gopin gorequires gvlscan hostload i18ncheck
+judgescan landingmigrate langcheck linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra
+modrename needread openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck
+pagespublish pagesretire pagetext pinscan pngeq priorart privscan prmerge prrefresh
+prscan qemufix quietscan redscan relverify sitelinks sitemigrate symfind tagcells
+tagscan testscan treecmp truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
 ```
 
-The six added since v0.78.0 are `fleetverbs`, `ghissue`, `pagesbuild`,
-`pagesbuildadd`, `pagesbuildcampaign` and `priorart`; the four added before them,
-since v0.67.0, were `branchscan`, `bzcomment`, `linkcheck` and `prrefresh`.
+The seven added since that count are `ghpr`, `ghrel`, `ghrepo`, `ghrun`,
+`linkjobscan`, `openfixed` and `privscan` — four of them GitHub **writes** that
+had been typed by hand, which is the shape this repository keeps finding:
+`guard-bash` refuses a hand-written forge write and names the program that is
+missing, and a missing tool is added rather than spelled differently.
 
 ⛔ **This count has now gone stale twice**, which is worth keeping on the page
 rather than quietly correcting. It said **55** for four days, then **59** against
@@ -264,3 +266,79 @@ CLOSABLE issues, with a comment naming the pull request, and never a REVIEW one.
 stops before the REST budget falls under `--margin` (default 1000) so the fleet's
 Renovate runners are not starved, and it paces the search API. Written against GitHub's
 documented search qualifiers, the issue timeline events and the closing-keyword rules.
+
+## `privscan`: a tool and a door against publishing a private file system {#privscan}
+
+On 2026-11-09 three issues were filed whose bodies each carried
+`/Users/<account>/Documents/<project>/<file>.tex` — a home directory, an account
+name, a directory layout and the name of an unpublished document. Nobody noticed
+until the owner of that machine asked whether their name had been leaked. The
+rule set afterwards names **three** things, not one: no leak of a name, nor of a
+path or a file name, on a user's file system.
+
+⛔ **An edit does not undo it.** GitHub keeps the original under *edited* for
+anyone who opens the history, so the only complete remedy is to delete and
+re-create — which is why `ghissue --delete` exists, and why the gate has to run
+*before* the send rather than after.
+
+`privscan body.md` checks a file; `--fix` rewrites it; `--repo owner/name` and
+`--org NAME` read what is already published, **comments and titles included**,
+because a code search does not index comments reliably — the first sweep of this
+leak found one occurrence and could not have found a second in a comment. Three
+paginated repository-wide calls read everything, against one call per issue. A
+repository whose read failed exits 2 and is never printed as clean.
+
+A finding prints its line, column and kind but **not the text it matched**
+unless `--show` asks: a refusal is printed where the body was going, and that is
+sometimes a public CI log.
+
+### The gate, inside `ghissue` {#privscan-gate}
+
+Every body and title `ghissue` sends passes `privpath` first, in `readBody` and
+`checkTitle` — the two functions every path through the command goes through —
+with the waiver as a **parameter** of both, so no future subcommand can read
+outgoing text without the compiler asking what to do about a disclosure. A gate
+reached by remembering to call it is not a gate.
+
+`--allow-private-path "<why>"` takes a **reason and has no default**: a boolean
+waiver is one keystroke and gets passed by reflex, while a reason has to be
+written, and writing it is the moment to notice there is nothing to write. It
+**stamps** — the reason is appended to the published text, so a waiver is a
+statement made in public rather than a switch flicked in private. **No waiver
+covers a title**: a title cannot carry the stamp and is republished in every
+listing, notification and cross-reference that an edit never reaches.
+
+### What the first sweep actually measured {#privscan-measured}
+
+509 findings over 60 repositories — and almost all of them were the instrument,
+not the fleet. Reading **one** real body settled it, where no reading of the
+count could have:
+
+| run | findings | what reading the text removed |
+| --- | --- | --- |
+| 1 | 509 in 67 texts | a package manager's `/home/.zpkg/…` prefix read as a person called `.zpkg`, every package name along it then hunted as that person's document; and a TeX `\\` — a line break in LaTeX, an escaped backslash in every Go string — matched as a Windows share whose one-letter name was hunted through all 60 repositories |
+| 2 | 126 in 51 texts | `/Users/Shared`, which is everyone's; and `Home/End/Space`, a list of **keyboard keys**, read as the home directory of a person called `End` |
+| 3 | 45 in 6 texts | — |
+
+The single real disclosure was the same in all three runs: the one the first
+sweep had already found. A three-figure count from a new instrument on a large
+corpus measures the instrument.
+
+⛔ Hence `--accounts`, which answers the question a count cannot: **whose** file
+system was named, and whether this machine's is among them. The verdict is a
+sentence, not a number, and a clean sweep prints it too — silence after a sweep
+reads as *clean* and cannot be told from a command that printed nothing.
+
+⛔ And hence four sentences for four states of "who am I", which CI had to
+teach: `--no-self` (not checked), an unreadable home, a **generic** account
+(`/home/runner` identifies nobody, so there is nothing of its own to disclose),
+and a real one. The first version printed "could not be read" for the generic
+case, which was false — an instrument whose two outcomes read alike measures
+neither — and computed a verdict about an account `--no-self` had excluded.
+
+Two design costs are stated on purpose. A generic account's path is skipped
+whole, tail included, so a document name under `/home/user/` goes unreported;
+and nothing below a dot-directory is hunted bare, because
+`/Users/<account>/.pkgx/llvm.org/v22.1.8/bin/clang-22` taught the scanner
+`llvm.org` and `v22.1.8` — public package coordinates named six times in the
+prose that *was* the report, which a redaction would have eaten.
