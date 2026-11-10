@@ -9,7 +9,7 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.84.0** (`06dfd81`, 2026-11-07, measured the same day). The prose below was
+**v0.104.0** (`69b51b87`, 2026-11-10, measured the same day). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections at the
 end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
@@ -26,26 +26,31 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**72 directories under `cmd/`**, each with a `main.go` (counted 2026-11-09 with
-`git ls-tree cmd/` on `5d0fae1`, the released head of v0.94.0; it was 65 on
-2026-11-07 at `06dfd81`, and 64 at v0.81.2):
+**79 directories under `cmd/`**, each with a `main.go` (counted 2026-11-10 with
+`git ls-tree cmd/` on `69b51b87`, the released head of v0.104.0; it was 72 on
+2026-11-09 at `5d0fae1` for v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at
+v0.81.2):
 
 ```text
 abbench blobpurge branchscan brandcheck brief buildscan buildtag bzcomment clonescan
-covblocks cronscan docscan docscheck docsversions docsym flagcensus fleetverbs ghissue
-ghpr ghrel ghrepo ghrun glmerge gofloor gopin gorequires gvlscan hostload i18ncheck
-judgescan landingmigrate langcheck linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra
-modrename needread openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck
-pagespublish pagesretire pagetext pinscan pngeq priorart privscan prmerge prrefresh
-prscan qemufix quietscan redscan relverify sitelinks sitemigrate symfind tagcells
-tagscan testscan treecmp truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
+copycheck covblocks cronscan docmd docscan docscheck docsversions docsym flagcensus
+fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin gorequires gotest
+gvlscan hostload i18ncheck judgescan landingmigrate langcheck linkcheck linkjobscan
+mantracheck mdpdf mkdocs2hextra modrename needread openfixed pagesbuild pagesbuildadd
+pagesbuildcampaign pagescheck pagespublish pagesretire pagetext pinscan pngeq priorart
+privscan prmerge prrefresh prscan pullresidue qemufix quietscan redscan relverify runson
+secondorigin sitelinks sitemigrate staleref symfind tagcells tagscan testscan treecmp
+truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
 ```
 
-The seven added since that count are `ghpr`, `ghrel`, `ghrepo`, `ghrun`,
-`linkjobscan`, `openfixed` and `privscan` — four of them GitHub **writes** that
-had been typed by hand, which is the shape this repository keeps finding:
-`guard-bash` refuses a hand-written forge write and names the program that is
-missing, and a missing tool is added rather than spelled differently.
+The seven added since the 72 are `copycheck`, `docmd`, `gotest`, `pullresidue`,
+`runson`, `secondorigin` and `staleref`. Three of them exist because a *check*
+could not be trusted to run: `gotest` refuses to let `go test -run` report `ok`
+for a pattern that matched nothing, `staleref` finds the names a rename left
+behind, and `copycheck` the text that was duplicated instead of shared.
+`runson` was the last fleet tool living outside a repository — a Go program with
+tests in a plain directory with no remote — which is the one thing a tool here
+may not be.
 
 ⛔ **This count has now gone stale twice**, which is worth keeping on the page
 rather than quietly correcting. It said **55** for four days, then **59** against
@@ -110,7 +115,17 @@ Grouped by the question they answer:
   external tool the CI never installs — a foreign judge that exists in the source and
   has never once run), `covblocks` (the blocks a coverage profile never entered, because
   `go tool cover -func` rounds to one decimal and a 100 % gate passes at 99.95 %),
-  `buildscan`, `buildtag`, `flagcensus`.
+  `buildscan`, `buildtag`, `flagcensus`, `runson` (which **runner images** the
+  workflows ask for, counted per repository and not per file: 1226 of 1247
+  checkouts with workflows stand on `ubuntu-latest`, which upstream is moving to
+  Ubuntu 26.04 between 2026-10-19 and 2026-11-19 — inside that window a red CI
+  can be the *image* moving while the repository did not). ⛔ It reads checkouts
+  and makes no API call, and the price of reading a disk is stated rather than
+  disclaimed: it **measures** how many of the checkouts it read are behind their
+  remote — 842 of 1247, furthest 188 commits, with 405 more never fetched within
+  the horizon, so not one is confirmed current — and says which way that makes it
+  wrong, because a checkout predating a newly added workflow makes the count a
+  floor and an absence read off a stale disk looks exactly like a real one.
 - **Is it safe?** `vulnscan`, `vulngate` (the per-repository half), `gofloor` (which Go
   toolchain a repository can be built with, and whether CI would notice a vulnerable
   one), `wfaudit`, `blobpurge`, `needread` (the `DT_NEEDED` entries of every ELF under a
