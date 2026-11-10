@@ -88,11 +88,24 @@ Grouped by the question they answer:
   were redone on one repository in a single day while "search the tracker first" was
   already written down as a rule — the thought arrives as *let me fix this*, never as
   *let me check whether this is fixed*, so the check runs instead of being remembered.
-  A surface it could not read holds the gate shut (status 2), including a GraphQL
+  A surface it could not read holds the gate shut (status 2) **even when another
+  surface found something** — and that clause was the defect rather than the design:
+  `found` was tested before `unread`, so a branch match returned "already covered" on
+  a run whose tracker had answered HTTP 422 and been read by nobody, printing the
+  warning above a verdict that said the opposite. The shut gate includes a GraphQL
   refusal, which arrives as HTTP 200 with an `errors` array: read past that and a
   refused query becomes an empty branch list, which is a clean gate on a surface never
-  read. It keeps the search's own ranking, because a scoring pass of its own was
-  measured against it and came out worse.
+  read.
+
+  The search is **split at six terms**, because GitHub allows five `AND`/`OR`/`NOT`
+  operators and seven OR-ed clauses answered HTTP 422 outright — so the subjects that
+  silently lost the tracker half were the carefully written ones, which are the
+  subjects most likely to have prior art. Terms are batched six to a query and the
+  results unioned; one failed batch is the **whole surface unread**, not a partial
+  answer. Splitting costs the single global ranking, since GitHub ranks within a
+  query, so batches are emitted in term order and each keeps the order the search gave
+  it — nothing re-ranks them, because a scoring pass of its own was measured against
+  GitHub's relevance and came out worse.
 - **Does the CI actually test it?** `testscan`, `judgescan` (tests that look for an
   external tool the CI never installs — a foreign judge that exists in the source and
   has never once run), `covblocks` (the blocks a coverage profile never entered, because
