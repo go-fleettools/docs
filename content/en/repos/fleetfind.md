@@ -7,19 +7,17 @@ weight: 80
 
 **Which repository already does this?** A live, dated inventory of every
 organisation, because a hand-kept capability map drifts.
-[Repository →](https://github.com/go-fleettools/fleetfind) Latest tag: **v0.3.0**
+[Repository →](https://github.com/go-fleettools/fleetfind) Latest tag: **v0.4.0**
 (`git ls-remote --tags`, 2026-11-15); this page is written from its README at
-**v0.2.0**, and the two are stated separately on purpose: *which tag is current*
-and *which tag this page describes* are different facts. The README at the tag
-this page describes gives no install line; one was added on `main` on 2026-10-26, after checking that
-it builds:
+**v0.4.0**.
 
 ```sh
-go install github.com/go-fleettools/fleetfind@latest
+go install github.com/go-fleettools/fleetfind@v0.4.0
 ```
 
 ```sh
-fleetfind -refresh             # ~335 calls, one dated inventory
+fleetfind -refresh             # ~377 gh calls: one dated inventory, then the file/function index
+fleetfind -index               # only the index, from the module proxy: 0 GitHub calls
 fleetfind odf rtf markdown
 ```
 
@@ -32,6 +30,24 @@ go-richdoc/markdown                Markdown (CommonMark + GFM) <-> richdoc conve
 ```
 
 (The README's example, with the date of its inventory.)
+
+## Files and functions, not only domains {#index}
+
+A repository's name and description name its domain, never its functions, so
+`fleetfind quantile` used to print `nothing in 2253 repositories` while
+`go-statistics/stats` has `quantile.go`. The index adds file names and the exported
+top-level identifiers of every Go module, read from the Go module proxy (0 GitHub
+calls, incremental on `pushed_at`, bounded and zip-slip safe):
+
+```text
+go-statistics/stats   file:quantile.go
+go-statistics/stats   ident:Quantile
+```
+
+Every run says how many repositories were indexed, how many are not in the proxy
+(not a module, **private**, or unpublished: a blind spot, not a NO), and how many
+are **UNREAD** with the reason. A zero is never printed as `nothing in N
+repositories` when part of N could not be read.
 
 ## What it will not let you believe {#rules}
 
