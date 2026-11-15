@@ -7,9 +7,12 @@ weight: 30
 
 **Prove that a test can fail.** Apply one exact source mutation, run the suite,
 restore whatever happens, and exit 0 only when the suite went **red**.
-[Repository →](https://github.com/go-fleettools/mutate) Latest tag: **v0.7.0**; this
-page is written from its README at that tag. It has no dependency beyond the standard
-library.
+[Repository →](https://github.com/go-fleettools/mutate) Latest tag: **v0.8.0**
+(`git ls-remote --tags`, 2026-11-15); this page is written from its README at
+**v0.7.0**, and the two are stated separately on purpose — *which tag is current*
+and *which tag this page describes* are different facts, and writing one where the
+other belongs is how a page comes to assert a version nobody checked it against.
+It has no dependency beyond the standard library.
 
 ```console
 $ mutate -file browse.go -name "mark repeats too" \

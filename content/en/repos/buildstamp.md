@@ -7,7 +7,9 @@ weight: 110
 
 Read the Go build information of any binary, WebAssembly included, and fail one built
 from a modified tree. [Repository →](https://github.com/go-fleettools/buildstamp)
-Latest tag: **v0.1.0**; this page is written from the facts of that release.
+Latest tag: **v0.2.0** (`git ls-remote --tags`, 2026-11-15); this page is written
+from the facts of **v0.1.0**, and the two are stated separately on purpose:
+*which tag is current* and *which tag this page describes* are different facts.
 
 `go version -m` and `debug/buildinfo` answer "unrecognized file format" on a `.wasm`
 file. The go command writes the module information into every binary it links, between
