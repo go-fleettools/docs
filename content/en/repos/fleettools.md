@@ -9,7 +9,7 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.123.0** (`4235455`, 2026-11-15, measured the same day). The prose below was
+**v0.128.0** (`62dadb3`, 2026-11-16, measured the same day). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections and the
 `modtidy` section at the end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
@@ -26,24 +26,75 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**88 directories under `cmd/`**, each with a `main.go` (counted 2026-11-15 with
-`git ls-tree cmd/` on `a67ac44`, which is main and is two commits past the
-released head of v0.123.0; it was 86 earlier the same day on `4235455`, 79 on
-2026-11-10 at `69b51b87` for v0.104.0, 72 on 2026-11-09 at `5d0fae1` for
-v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
+**94 directories under `cmd/`**, each with a `main.go` (counted 2026-11-16 with
+`git ls-tree -d cmd/` on `62dadb3`, which is main and is the released head of
+v0.128.0; it was 88 on 2026-11-15 at `a67ac44`, 86 earlier that day on
+`4235455`, 79 on 2026-11-10 at `69b51b87` for v0.104.0, 72 on 2026-11-09 at
+`5d0fae1` for v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
 
 ```text
 abbench aptneed blobpurge branchscan brandcheck brief buildscan buildtag bzcomment
 clonescan copycheck covblocks cronscan docmd docscan docscheck docsversions docsym
 editurl failset flagcensus fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin
-gorequires gotest gvlscan hostload i18ncheck judgescan landingmigrate langcheck
+gorequires gotest gvlscan hostload i18ncheck judgescan landingkitdist landingmigrate
+landingorgs landingrollout landingrollsum langcheck
 linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modrename modtidy needread
 openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
-prscan pullresidue qemufix quietscan recur redscan relverify replystamp runson secondorigin
+prscan pullresidue qemufix quietscan ratewait recur redscan relverify replystamp runson secondorigin
 sitelinks sitemigrate staleref symfind tagcells tagscan testscan testwhy tinydur
-treecmp truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
+treecmp truncspill unarc viaonly vscan vulngate vulnscan wasmsize wfaudit
 ```
+
+The six added since the 88 are named by `git log --diff-filter=A` over
+`cmd/*/main.go` rather than by comparing two lists by eye, and the arithmetic
+reconciles — 88 + 6 = 94. ⛔ Two of them this page describes below, and **four
+it does not**: `landingkitdist`, `landingorgs`, `landingrollout` and
+`landingrollsum` arrived together on 2026-11-15 in
+[#326](https://github.com/go-fleettools/fleettools/pull/326) as the landing-kit
+rollout, and nobody has read their code for this page yet. Naming them in a
+counted list is a measurement; describing what they do without reading them
+would be the defect this fleet keeps writing down — a true observation with an
+invented mechanism — so the gap is stated instead.
+
+`viaonly` (v0.126.0, 2026-11-15) answers two questions about a package: which
+**calls** bypass the wrapper they were supposed to go through (`--wraps/--via`),
+and which **exit points** never ask the question the function exists to ask
+(`--asks/--in`). The second rule needed a second shape rather than a flag,
+because an early `return` does not read as an exit and a `return` is not a call.
+It credits only what is **certainly evaluated**: of `A && B` only `A` is, a case
+list is evaluated in order so only its first expression is, a clause reached by
+`fallthrough` evaluated none of its own, and a `defer`, a `go` statement or a
+function literal is never credited. ⛔ Its own first version let through exactly
+the defect it was written for: it credited *"this statement contains a
+question"*, so a question asked inside one `switch` case marked every later exit
+as having asked it — the defect's second round, with the suite green and
+coverage full. What caught it was recalculating a twenty-row expectation table
+by hand, where **five of the twenty were wrong**; three further review rounds
+found ten real defects in it, each time against a green suite.
+
+`ratewait` (v0.128.0, 2026-11-16) blocks until a named GitHub budget is at or
+above a threshold, and exists because nothing in the fleet could **wait**. The
+hourly budget is per *user* with about twenty-five sessions drawing on it, so a
+program meets a 403 it did nothing to cause, and `fleet.Throttled` answers
+`false` for *API rate limit exceeded* on purpose — that budget will not refill
+inside any backoff — which correctly ends the retry and leaves nobody able to
+come back at the reset. It sleeps to the reset the API reports rather than on an
+interval, because a poll loop spends the budget it is waiting for. ⛔ **Four
+rounds of review each found its loop unbounded in a new way, and the result is a
+rule about waiting rather than about one command: a predicate over a value the
+remote reports is not a bound you control.** *Strictly later than the last
+reset*, *later by at least the margin* and *strictly in the future* were each
+defeated by a reset that moves with the clock — the last measured at five
+readings in twelve seconds, about 1300 under a 65-minute deadline. What bounds
+it is a **count** of readings derived from the window the API's own body shows
+(the farthest reset among fifteen resources is 59m59s), three plus one per hour
+the deadline allows; flooring that division refused a legitimate wait at
+`--timeout 59m`, and its own test had pinned the undercount **as the
+specification**, so a mutation raising the count was reported *caught* by an
+expectation that had moved with the defect. A `+ unit - 1` ceil also overflows
+`int64` at the largest duration the flag parser accepts, which turned the
+longest wait askable into an instant refusal.
 
 The two added since the 86, both on 2026-11-15, are `editurl` and `recur`.
 `editurl` asks whether a Hextra site's *"Edit this page on GitHub"* link reaches
