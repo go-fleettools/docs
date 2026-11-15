@@ -7,9 +7,11 @@ weight: 80
 
 **Which repository already does this?** A live, dated inventory of every
 organisation, because a hand-kept capability map drifts.
-[Repository →](https://github.com/go-fleettools/fleetfind) Latest tag: **v0.2.0**;
-this page is written from its README at that tag. The README at that
-tag gives no install line; one was added on `main` on 2026-10-26, after checking that
+[Repository →](https://github.com/go-fleettools/fleetfind) Latest tag: **v0.3.0**
+(`git ls-remote --tags`, 2026-11-15); this page is written from its README at
+**v0.2.0**, and the two are stated separately on purpose: *which tag is current*
+and *which tag this page describes* are different facts. The README at the tag
+this page describes gives no install line; one was added on `main` on 2026-10-26, after checking that
 it builds:
 
 ```sh

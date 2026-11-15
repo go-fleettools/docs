@@ -8,7 +8,9 @@ weight: 40
 Wait until a pull request's checks are finished, and **refuse to call an empty check
 list a pass** — or a complete, all-green one, when a workflow run for the same commit
 is red. [Repository →](https://github.com/go-fleettools/prwait) Latest tag:
-**v0.7.0**; this page is written from its README at that tag.
+**v0.10.0** (`git ls-remote --tags`, 2026-11-15); this page is written from its
+README at **v0.7.0**, and the two are stated separately on purpose: *which tag is
+current* and *which tag this page describes* are different facts.
 
 ```console
 $ prwait -repo go-pkgx/pkgx 82 83

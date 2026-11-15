@@ -7,7 +7,9 @@ weight: 100
 
 Run every Go fuzz target of a module, in parallel within a load budget, and report
 crashers. [Repository →](https://github.com/go-fleettools/fuzzrun) Latest tag:
-**v0.1.0**; this page is written from its README at that tag.
+**v0.2.0** (`git ls-remote --tags`, 2026-11-15); this page is written from its
+README at **v0.1.0**, and the two are stated separately on purpose: *which tag is
+current* and *which tag this page describes* are different facts.
 
 `go test -fuzz` runs one target of one package at a time, so a module with thirty
 targets needs thirty commands, and a run left unattended either overloads the machine

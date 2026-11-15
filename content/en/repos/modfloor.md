@@ -6,8 +6,10 @@ weight: 60
 # modfloor {#modfloor}
 
 The Go toolchain floor a module **declares**, against the floor a fix **requires**.
-[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.7.0**;
-this page is written from its README at that tag. v0.3.0 added the `modfloor pseudo`
+[Repository →](https://github.com/go-fleettools/modfloor) Latest tag: **v0.10.0**
+(`git ls-remote --tags`, 2026-11-15); this page is written from its README at
+**v0.7.0**, and the two are stated separately on purpose: *which tag is current*
+and *which tag this page describes* are different facts. v0.3.0 added the `modfloor pseudo`
 subcommand, [below](#pseudo); v0.4.0 splits the exposure by whether a consumer can
 reach it, [below](#split); v0.5.0 adds `--baseline`, [below](#baseline), and
 corrects the population every earlier figure was counted over; v0.6.0 costs the

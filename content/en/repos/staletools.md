@@ -8,7 +8,9 @@ weight: 50
 Which installed Go tools were built with an older toolchain, and, of those, **which
 actually parse Go source**, because only for those is staleness a wrong answer rather
 than an old binary. [Repository →](https://github.com/go-fleettools/staletools)
-Latest tag: **v0.3.0**; this page is written from its README at that tag.
+Latest tag: **v0.4.0** (`git ls-remote --tags`, 2026-11-15); this page is written
+from its README at **v0.3.0**, and the two are stated separately on purpose:
+*which tag is current* and *which tag this page describes* are different facts.
 
 ```console
 $ staletools
