@@ -26,23 +26,36 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**86 directories under `cmd/`**, each with a `main.go` (counted 2026-11-15 with
-`git ls-tree cmd/` on `4235455`, the released head of v0.123.0; it was 79 on
+**88 directories under `cmd/`**, each with a `main.go` (counted 2026-11-15 with
+`git ls-tree cmd/` on `a67ac44`, which is main and is two commits past the
+released head of v0.123.0; it was 86 earlier the same day on `4235455`, 79 on
 2026-11-10 at `69b51b87` for v0.104.0, 72 on 2026-11-09 at `5d0fae1` for
 v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
 
 ```text
 abbench aptneed blobpurge branchscan brandcheck brief buildscan buildtag bzcomment
 clonescan copycheck covblocks cronscan docmd docscan docscheck docsversions docsym
-failset flagcensus fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin
+editurl failset flagcensus fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin
 gorequires gotest gvlscan hostload i18ncheck judgescan landingmigrate langcheck
 linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modrename modtidy needread
 openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
-prscan pullresidue qemufix quietscan redscan relverify replystamp runson secondorigin
+prscan pullresidue qemufix quietscan recur redscan relverify replystamp runson secondorigin
 sitelinks sitemigrate staleref symfind tagcells tagscan testscan testwhy tinydur
 treecmp truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
 ```
+
+The two added since the 86, both on 2026-11-15, are `editurl` and `recur`.
+`editurl` asks whether a Hextra site's *"Edit this page on GitHub"* link reaches
+the page's own source, and reads the **repository** rather than the URL: GitHub's
+`/edit/` route authenticates before it resolves a path, so an anonymous request
+to an existing repository answers `302` to a login page whatever the path is, and
+a fetcher cannot tell a correct href from a broken one. Measured over 1318
+checkouts: **75 of the 97 sites that render the link do not resolve** — 64 name a
+repository that does not exist (`github.com/<org>/edit/…`), 7 name the
+organisation's *code* repository rather than its docs one, and 4 double the
+language (`…/content/en/en/page.md`). `recur` refuses to publish while a lesson
+that recorded a recurrence has no gate.
 
 The seven added since the 79 are `aptneed`, `failset`, `modtidy`, `paritycheck`,
 `replystamp`, `testwhy` and `tinydur`. Four of them are gates against a *rule
@@ -60,10 +73,14 @@ behind, and `copycheck` the text that was duplicated instead of shared.
 tests in a plain directory with no remote — which is the one thing a tool here
 may not be.
 
-⛔ **This count has now gone stale three times**, which is worth keeping on the
+⛔ **This count has now gone stale four times**, which is worth keeping on the
 page rather than quietly correcting. It said **55** for four days, then **59**
-against a repository that held 64, and then **79** against a repository that held
-86 — five days, seven commands, and again nothing recounted it. Each time the
+against a repository that held 64, then **79** against a repository that held
+86 — five days, seven commands, and again nothing recounted it — and then **86**
+against a repository that held 88, which went stale **the same afternoon it was
+written**: two commands merged between the recount and this edit. That is the
+shortest life any of these figures has had, and it is the one that makes the
+point best, because the author of the figure was still at the keyboard. Each time the
 figure was right when it was written, which is exactly what makes it hard to
 doubt: a number on a page carries no sign of when it was true. The remedy that works is the
 one used here: cite the **commit** the count was taken on, so the claim carries
@@ -73,8 +90,15 @@ reading its `--help` says so — it builds every published version of a versione
 site and publishes them, which is what it is described as further down this page.
 No command in this repository judges whether a figure on a page still holds, so
 the commit citation is the whole mechanism, and
-`docscan -fail-on-drift` reported **0 drift** throughout both episodes — correctly
-by its own definition, and blind to a version asserted in prose.
+`docscan -fail-on-drift` reported **0 drift** throughout every episode — correctly
+by its own definition, and blind to a version asserted in prose. The gate for
+that is filed as item 1 of
+[fleettools#201](https://github.com/go-fleettools/fleettools/issues/201) and is
+still unbuilt; the fourth occurrence above is its fourth witness. What makes it
+buildable rather than a wish: `tagscan` already resolves each repository's real
+latest tag, so the comparison exists — what is missing is reading the claim out
+of the page, and a negative control, because a page that deliberately documents
+an older tag is legitimate and must not fire.
 
 Grouped by the question they answer:
 
@@ -150,7 +174,9 @@ Grouped by the question they answer:
   generator a published URL was built with), `pagescheck` (whether a Pages site serves
   what its repository builds), `pagetext` (whether a published page now carries the text
   we wrote), `sitelinks` (whether every local link of a built site leads to a file of
-  that build), `linkcheck` (whether every **external** link a documentation source names
+  that build), `editurl` (whether a Hextra site's *"Edit this page on GitHub"* link
+  reaches the page's own source — it reads the repository, because that link's status
+  code cannot tell a correct href from a broken one), `linkcheck` (whether every **external** link a documentation source names
   still resolves — it replaced the `grep`/`sed`/`curl` the documentation workflows
   carried, which failed twice on random 504s from github.com and passed on the third
   run), `docsym`, `i18ncheck`, `langcheck`, `mantracheck`, `brandcheck`.
