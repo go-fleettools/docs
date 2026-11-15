@@ -9,9 +9,9 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.104.0** (`69b51b87`, 2026-11-10, measured the same day). The prose below was
-written from the repository at **v0.67.0**, plus the two v0.82.x sections at the
-end written from the change itself — the command inventory under `cmd/`,
+**v0.123.0** (`4235455`, 2026-11-15, measured the same day). The prose below was
+written from the repository at **v0.67.0**, plus the two v0.82.x sections and the
+`modtidy` section at the end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
 apart on purpose: *which tag is current* and *which tag this page describes* are
 different facts, and writing one where the other belongs is how a page comes to
@@ -26,22 +26,30 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**79 directories under `cmd/`**, each with a `main.go` (counted 2026-11-10 with
-`git ls-tree cmd/` on `69b51b87`, the released head of v0.104.0; it was 72 on
-2026-11-09 at `5d0fae1` for v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at
-v0.81.2):
+**86 directories under `cmd/`**, each with a `main.go` (counted 2026-11-15 with
+`git ls-tree cmd/` on `4235455`, the released head of v0.123.0; it was 79 on
+2026-11-10 at `69b51b87` for v0.104.0, 72 on 2026-11-09 at `5d0fae1` for
+v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
 
 ```text
-abbench blobpurge branchscan brandcheck brief buildscan buildtag bzcomment clonescan
-copycheck covblocks cronscan docmd docscan docscheck docsversions docsym flagcensus
-fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin gorequires gotest
-gvlscan hostload i18ncheck judgescan landingmigrate langcheck linkcheck linkjobscan
-mantracheck mdpdf mkdocs2hextra modrename needread openfixed pagesbuild pagesbuildadd
-pagesbuildcampaign pagescheck pagespublish pagesretire pagetext pinscan pngeq priorart
-privscan prmerge prrefresh prscan pullresidue qemufix quietscan redscan relverify runson
-secondorigin sitelinks sitemigrate staleref symfind tagcells tagscan testscan treecmp
-truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
+abbench aptneed blobpurge branchscan brandcheck brief buildscan buildtag bzcomment
+clonescan copycheck covblocks cronscan docmd docscan docscheck docsversions docsym
+failset flagcensus fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin
+gorequires gotest gvlscan hostload i18ncheck judgescan landingmigrate langcheck
+linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modrename modtidy needread
+openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
+pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
+prscan pullresidue qemufix quietscan redscan relverify replystamp runson secondorigin
+sitelinks sitemigrate staleref symfind tagcells tagscan testscan testwhy tinydur
+treecmp truncspill unarc vscan vulngate vulnscan wasmsize wfaudit
 ```
+
+The seven added since the 79 are `aptneed`, `failset`, `modtidy`, `paritycheck`,
+`replystamp`, `testwhy` and `tinydur`. Four of them are gates against a *rule
+that was written and then not followed*: `replystamp` for a reply with no
+timestamp, `paritycheck` for a body that parks a performance change on bit
+identity, `modtidy` for the nested `go.mod` nobody tidies ([below](#modtidy)),
+and `failset` for a failure list compared by count instead of by label.
 
 The seven added since the 72 are `copycheck`, `docmd`, `gotest`, `pullresidue`,
 `runson`, `secondorigin` and `staleref`. Three of them exist because a *check*
@@ -52,12 +60,19 @@ behind, and `copycheck` the text that was duplicated instead of shared.
 tests in a plain directory with no remote — which is the one thing a tool here
 may not be.
 
-⛔ **This count has now gone stale twice**, which is worth keeping on the page
-rather than quietly correcting. It said **55** for four days, then **59** against
-a repository that held 64 — and each time nothing recounted it, because a number
-on a page is something a reader has no way to doubt. The remedy that works is the
+⛔ **This count has now gone stale three times**, which is worth keeping on the
+page rather than quietly correcting. It said **55** for four days, then **59**
+against a repository that held 64, and then **79** against a repository that held
+86 — five days, seven commands, and again nothing recounted it. Each time the
+figure was right when it was written, which is exactly what makes it hard to
+doubt: a number on a page carries no sign of when it was true. The remedy that works is the
 one used here: cite the **commit** the count was taken on, so the claim carries
-its own expiry. `docsversions` is the tool for the version a page claims, and
+its own expiry — and nothing checks it automatically. ⚠ This paragraph used to
+say `docsversions` was "the tool for the version a page claims"; it is not, and
+reading its `--help` says so — it builds every published version of a versioned
+site and publishes them, which is what it is described as further down this page.
+No command in this repository judges whether a figure on a page still holds, so
+the commit citation is the whole mechanism, and
 `docscan -fail-on-drift` reported **0 drift** throughout both episodes — correctly
 by its own definition, and blind to a version asserted in prose.
 
@@ -370,3 +385,79 @@ and nothing below a dot-directory is hunted bare, because
 `/Users/<account>/.pkgx/llvm.org/v22.1.8/bin/clang-22` taught the scanner
 `llvm.org` and `v22.1.8` — public package coordinates named six times in the
 prose that *was* the report, which a redaction would have eaten.
+
+## `modtidy`: every `go.mod` of a clone, and the two answers it refuses to guess {#modtidy}
+
+Written from the change at **v0.123.0** (`4235455`), not from the README.
+
+`go mod tidy` at the root **does not enter a directory that has its own
+`go.mod`**. Three recorded occurrences, each a root that was tidied and tested
+green before the CI went red with *"updates to go.mod needed"*: `go-widgets/toolkit`
+twice, through its `rougelex/` sub-module, and `go-numerics/integrate` through
+`bench/`. So `modtidy [dir]` finds every `go.mod` beneath a clone and judges each
+one with `GOTOOLCHAIN=local GOWORK=off go mod tidy -diff` — the CI's own
+constraint, because `GOTOOLCHAIN=auto` fetches whatever a directive asks for and
+hides the problem, and a `go.work` file would let a sibling satisfy a requirement
+the CI never sees. `modtidy --hook` is the PreToolUse form: it acts only on a
+command position `gitpush` or `git push`, and denies the push naming the module
+and the fix.
+
+A module is reported `tidy`, `untidy` with its diff, `UNREAD`, or `skipped`.
+
+⛔ **UNREAD is never clean**, and the two classes below exist because the command
+twice gave an answer where it could not know. Both were measured on 2026-11-15.
+
+### A module with no Go source cannot be judged by a tidy {#modtidy-nosource}
+
+`go-fft/docs` is a Hugo site whose only requirement is its theme. Running the
+remedy the hook itself printed — *"`go mod tidy`, commit go.mod and go.sum"* —
+empties both files and the site loses its theme. A gate that instructs the next
+session to break the repository is worse than no gate.
+
+In a module with **no Go source**, a tidy can only ever *remove* requirements, so
+its verdict carries no information. Such a module is `skipped`, with the reason
+named, decided before `go` runs at all — no toolchain, no network.
+
+Three details are the fix rather than decoration:
+
+- **A Hugo configuration is reported, never what decides.** `go-fft/docs` has no
+  `[module]` block; it mounts its theme with `theme = ["…"]`. A rule keyed on that
+  block would have missed the one repository it was written for.
+- **A nested module's sources never answer for its parent**, or a Hugo site with a
+  small Go tool beside it reads as Go code.
+- **A file behind a build constraint still counts.** A `//go:build tools` file
+  holding a blank import is the documented way to keep a requirement no package
+  uses, and skipping such a module would have hidden two dead `go.sum` lines this
+  gate correctly found in a landing.
+
+⚠ And the pattern the fleet already documents **cannot** repair such a repository
+instead: `go mod tidy` reports *"module … found, but does not contain package
+github.com/McShelby/hugo-theme-relearn"*. A landing kit is an importable Go
+package; a Hugo theme is templates and CSS that merely carry a `go.mod`. There is
+no package to import, so no Go code can hold that requirement — and nothing in the
+shape of the two repositories announces the difference.
+
+### A directive floor above the installed toolchain is not a verdict {#modtidy-floor}
+
+`GOTOOLCHAIN=local` is the right constraint to reproduce, but on a host whose
+installed Go is older than a module's `go` line it cannot build the module at all —
+and in the hook, UNREAD means *allow*. The gate had therefore gone silently off for
+every repository raised to `go 1.27.4`, **this one included**:
+
+```text
+UNREAD  .: go: go.mod requires go >= 1.27.4 (running go 1.27.3; GOTOOLCHAIN=local)
+```
+
+The check now retries once with the toolchain the directive **names**, which
+reproduces the CI rather than loosening anything: the runner there *has* the version
+the directive requires, which is the only reason `GOTOOLCHAIN=local` succeeds for it.
+Deliberately not `GOTOOLCHAIN=auto`, which leaves the version used unstated — an
+instrument whose version is implicit is not an instrument. `GOWORK=off` is untouched.
+The report names the toolchain that answered, so a verdict reached under the
+directive's version can be told from one reached under whatever the host happens to
+have installed.
+
+⛔ A broken `go.mod` is still UNREAD, never `skipped`: a skip is a clean answer, and
+"holds no `.go` file" has not read the file that is wrong. The repository's own
+corpus caught that during the change — a `go.mod` holding garbage has no Go source
+beside it either.
