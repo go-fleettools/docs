@@ -412,9 +412,15 @@ A finding prints its line, column and kind but **not the text it matched**
 unless `--show` asks: a refusal is printed where the body was going, and that is
 sometimes a public CI log.
 
-### The gate, inside `ghissue` {#privscan-gate}
+### The gate, inside `ghissue` and `ghpr` {#privscan-gate}
 
-Every body and title `ghissue` sends passes `privpath` first, in `readBody` and
+Since v0.129.0 the gate lives in `internal/privgate`, shared by `ghissue` and
+`ghpr`, and `ghpr <owner/repo> create --head BRANCH --title T --body-file F`
+(`--base-branch` is the target; `--base` stays the API URL) opens a pull request
+through it: it also refuses a head with no commits ahead, a head that already has
+an open pull request, and a body whose issue references lack `Closes`/`Refs`.
+
+Every body and title `ghissue` and `ghpr` send passes `privpath` first, in `readBody` and
 `checkTitle` — the two functions every path through the command goes through —
 with the waiver as a **parameter** of both, so no future subcommand can read
 outgoing text without the compiler asking what to do about a disclosure. A gate
