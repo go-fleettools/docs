@@ -122,6 +122,27 @@ expectation that had moved with the defect. A `+ unit - 1` ceil also overflows
 `int64` at the largest duration the flag parser accepts, which turned the
 longest wait askable into an instant refusal.
 
+`dashfix` (v0.148.1, 2026-11-20) fixes one line of an organisation's Renovate
+runner config on the branch of a red Renovate pull request, then waits for CI
+and merges it: `dependencyDashboard: true` becomes `dependencyDashboard: {
+enabled: true }`. Upstream Renovate migrated that key to an object, and the
+validator these repositories run (`renovate@latest --strict`) now exits 1 on the
+boolean, so every Renovate pull request in them was red for a reason its own
+diff does not show ([#305](https://github.com/go-fleettools/fleettools/issues/305)).
+Targets are spelled `owner/repo#number` and handled one at a time. For each, the
+REST budget must hold `--reserve` requests (default 1000) and the trailing hour
+fewer than `--max` merged pull requests (default 20), or the run **stops**; the
+pull request must be open with a *failed* check (green or pending ones are
+skipped, never touched); `agentsync claim` must succeed (a repository somebody
+else holds is skipped and listed); a repository whose workflows carry
+`RENOVATE_VERSION` is skipped and listed, because aligning that pin is a
+different change. It then commits, pushes with `gitpush`, waits with `prwait`
+and merges with `ghmerge` only when `prwait` says green. Any command that fails
+or refuses stops the whole run with status 1 and is never retried another way;
+a skip is not a failure. `--dry-run` judges and edits nothing. Exit status: 0
+every target merged or skipped, 1 something was refused, 2 the run could not
+start or stopped at a limit.
+
 `flakescan` (merged 2026-11-19 in
 [#367](https://github.com/go-fleettools/fleettools/pull/367), released in
 v0.141.0) counts how often a
