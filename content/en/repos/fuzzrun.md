@@ -7,8 +7,8 @@ weight: 100
 
 Run every Go fuzz target of a module, in parallel within a load budget, and report
 crashers. [Repository →](https://github.com/go-fleettools/fuzzrun) Latest tag:
-**v0.7.0** (`go list -m -versions`, 2026-11-20). This page describes `wait` from
-the README at **v0.1.0**, `audit` from the README at **v0.6.0** and `run` from the
+**v0.7.1** (`go list -m -versions`, 2026-11-20). This page describes `wait` from
+the README at **v0.1.0**, `audit` from the README at **v0.7.1** and `run` from the
 README at **v0.7.0**,
 and the versions are stated separately on purpose: *which tag is current* and
 *which tag this page describes* are different facts. ⚠ The repository also has
@@ -87,7 +87,13 @@ Finds the fuzz targets no workflow fuzzes. It parses the test files for the
 `GAP` per target no step fuzzes and a `BLANKET` per fuzz step under
 `continue-on-error: true` — a step that cannot fail cannot say that nothing was
 fuzzed. A step running `fuzzrun run` covers every target, or those of its
-`--package`. Otherwise only a `go test -fuzz` that go test would really run
+`--package`. The program is any shell word whose last path element is `fuzzrun`,
+quoted or not — `fuzzrun`, `"$(go env GOPATH)/bin/fuzzrun"`,
+`go run github.com/go-fleettools/fuzzrun@vX run` — and `echo "fuzzrun run"`, a
+`# … fuzzrun run` comment or `xfuzzrun run` are not calls. ⛔ Up to v0.7.0 a
+regular expression read it, and was wrong both ways: a quoted path was no call,
+so its targets came out `GAP` (go-crdt/crdt#185's first version), and the three
+non-calls above read as covering every target — a false green. Otherwise only a `go test -fuzz` that go test would really run
 counts: the pattern is an unanchored regexp, a pattern matching more than one
 target of the package fuzzes none, and `-fuzz` over several packages is refused
 by the go tool; those steps are `NOTE`s and their targets stay gaps.
