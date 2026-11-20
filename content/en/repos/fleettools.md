@@ -9,7 +9,8 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.128.0** (`62dadb3`, 2026-11-16, measured the same day). The prose below was
+**v0.141.0** (`a57b2c0`, 2026-11-20, measured the same day — read with
+`git rev-parse v0.141.0^{commit}` and `go list -m …@latest`, which agree). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections and the
 `modtidy` section at the end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
@@ -26,25 +27,50 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**94 directories under `cmd/`**, each with a `main.go` (counted 2026-11-16 with
-`git ls-tree -d cmd/` on `62dadb3`, which is main and is the released head of
-v0.128.0; it was 88 on 2026-11-15 at `a67ac44`, 86 earlier that day on
+**102 directories under `cmd/`**, each with a `main.go` (counted 2026-11-20 with
+`git ls-tree -d cmd/` on `a57b2c0`, which is the released head of v0.141.0; it
+was 101 on 2026-11-19 at `85ef23c`, the merge commit of
+[#367](https://github.com/go-fleettools/fleettools/pull/367), 94 on
+2026-11-16 at `62dadb3` for v0.128.0, 88 on 2026-11-15 at `a67ac44`, 86 earlier that day on
 `4235455`, 79 on 2026-11-10 at `69b51b87` for v0.104.0, 72 on 2026-11-09 at
 `5d0fae1` for v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
 
 ```text
-abbench aptneed blobpurge branchscan brandcheck brief buildscan buildtag bzcomment
-clonescan copycheck covblocks cronscan docmd docscan docscheck docsversions docsym
-editurl failset flagcensus fleetverbs ghissue ghpr ghrel ghrepo ghrun glmerge gofloor gopin
+abbench acdefault aptneed binnames blobpurge branchscan brandcheck brief buildscan
+buildtag bzcomment clonescan copycheck covblocks cronscan diffrefs docmd docscan
+docscheck docsversions docsym editurl failset flagcensus flakescan fleetverbs ghissue
+ghpr ghrel ghrepo ghrun glmerge gofloor gopin
 gorequires gotest gvlscan hostload i18ncheck judgescan landingkitdist landingmigrate
 landingorgs landingrollout landingrollsum langcheck
-linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modrename modtidy needread
+linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modelgate modrename modtidy needread
 openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
 prscan pullresidue qemufix quietscan ratewait recur redscan relverify replystamp runson secondorigin
-sitelinks sitemigrate staleref symfind tagcells tagscan testscan testwhy tinydur
-treecmp truncspill unarc viaonly vscan vulngate vulnscan wasmsize wfaudit
+sitelinks sitemigrate staleref symfind tagcells tagscan testscan testtime testwhy tinydur
+treecmp truncspill unarc viaonly vmkey vscan vulngate vulnscan waitload wasmsize wfaudit
 ```
+
+The one added since the 101 is `modelgate`
+([#368](https://github.com/go-fleettools/fleettools/pull/368), 2026-11-20, by
+another session; *"refuse a sub-agent launched with the wrong model"*), named by
+`git log --diff-filter=A 85ef23c..v0.141.0 -- 'cmd/*/main.go'` — 101 + 1 = 102 —
+and, like the six below it, named and not described: its code was not read for
+this page.
+
+The seven added since the 94 are named the same way, by
+`git log --diff-filter=A 62dadb3..85ef23c -- 'cmd/*/main.go'`, and the
+arithmetic reconciles — 94 + 7 = 101 — against the list above, which was
+checked against `git ls-tree` by a program rather than by eye. ⛔ **One** of the
+seven this page describes below, `flakescan`, and **six it does not**: `vmkey`
+([#339](https://github.com/go-fleettools/fleettools/pull/339)), `testtime`
+([#345](https://github.com/go-fleettools/fleettools/pull/345)), `acdefault`
+([#347](https://github.com/go-fleettools/fleettools/pull/347)), `diffrefs`
+([#349](https://github.com/go-fleettools/fleettools/pull/349)), `binnames`
+([#356](https://github.com/go-fleettools/fleettools/pull/356)) and `waitload`
+([#357](https://github.com/go-fleettools/fleettools/pull/357)), each merged by
+another session between 2026-11-17 and 2026-11-18. Their titles are in the
+pull requests; their code was not read for this page, and the rule above is the
+reason they are named and not explained.
 
 The six added since the 88 are named by `git log --diff-filter=A` over
 `cmd/*/main.go` rather than by comparing two lists by eye, and the arithmetic
@@ -95,6 +121,30 @@ specification**, so a mutation raising the count was reported *caught* by an
 expectation that had moved with the defect. A `+ unit - 1` ceil also overflows
 `int64` at the largest duration the flag parser accepts, which turned the
 longest wait askable into an instant refusal.
+
+`flakescan` (merged 2026-11-19 in
+[#367](https://github.com/go-fleettools/fleettools/pull/367), released in
+v0.141.0) counts how often a
+**named test** has failed across a repository's CI history, by lane, with a
+denominator. It exists because go-crdt/collab#204, one flake, had its sweep done
+by hand three times over three populations — commits on `main`, *red* runs on
+`main`, the pull request somebody happened to be on — and got three answers.
+⛔ **It reads runs × attempts, not runs.** Run `39069166645` of that repository
+is `attempt 2, conclusion success` on a pull request, and its first attempt
+holds a failure of the test: a flake is precisely the failure that gets re-run,
+and a re-run repaints the run green while the evidence stays in attempt *n−1*,
+so a census over runs whose conclusion is `failure` cannot see what it counts
+and "N in M runs" is a **floor**. It also reads a failed *step* inside a green
+job (`continue-on-error` leaves the job green), every page of a job list (a
+short read is an error rather than a smaller answer), and only the logs of jobs
+that failed. Zero occurrences **with anything unread exits 2**, never 0, because
+GitHub discards logs on a retention window. First run, over the whole window of
+that issue — 257 runs, 265 attempts, 6296 jobs, 66 logs: **3 occurrences across
+two lanes** (`arch amd64` 2, `test (ubuntu-latest)` 1), the three the issue
+already recorded and no fourth, with one listing unread and named. ⛔ Its
+mutation sweep found the suite reaching the **real GitHub** for 4 min 25 s with
+a refusal deleted, because the flag table's only protection from the network was
+the guard under test; the reader is a variable the tests replace now.
 
 The two added since the 86, both on 2026-11-15, are `editurl` and `recur`.
 `editurl` asks whether a Hextra site's *"Edit this page on GitHub"* link reaches
