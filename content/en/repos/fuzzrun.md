@@ -7,8 +7,9 @@ weight: 100
 
 Run every Go fuzz target of a module, in parallel within a load budget, and report
 crashers. [Repository →](https://github.com/go-fleettools/fuzzrun) Latest tag:
-**v0.6.0** (`go list -m -versions`, 2026-11-19). This page describes `run` and
-`wait` from the README at **v0.1.0** and `audit` from the README at **v0.6.0**,
+**v0.7.0** (`go list -m -versions`, 2026-11-20). This page describes `wait` from
+the README at **v0.1.0**, `audit` from the README at **v0.6.0** and `run` from the
+README at **v0.7.0**,
 and the versions are stated separately on purpose: *which tag is current* and
 *which tag this page describes* are different facts. ⚠ The repository also has
 `census`, `workflow` and `adopt` subcommands, which this page does not describe
@@ -48,18 +49,32 @@ fuzzrun run [--dir .] [--time 10m] [--jobs 3] [--parallel 2] \
   of pretending the machine was quiet.
 - `--package` keeps only matching packages (repeatable).
 - A target that fails with a `Failing input written to testdata/fuzz/<Name>/<hash>`
-  line is a `CRASH`, and the summary gives that path relative to the module. Any
-  other failing exit is a `FAIL`, with the log to read.
+  line is a `CRASH`, and the summary gives that path relative to the module.
+- Since **v0.7.0**, a target that fails with `context deadline exceeded` and wrote
+  **no** failing input is a `DEADLINE`: the fuzz coordinator's own deadline arrived
+  while a worker was still inside an input, with nothing found. It is printed with
+  its log and counted, and it does not make the run exit 1. The crasher is checked
+  first — a target can reach the deadline after writing a failing input, and is
+  then a `CRASH`.
+- Any other failing exit is a `FAIL`, with the log to read.
 
 ```text
-PASS  ./. FuzzGood 5s
-CRASH ./. FuzzBad  1.2s testdata/fuzz/FuzzBad/6f1c...
-2 targets: 1 PASS, 0 FAIL, 1 CRASH
+PASS     ./. FuzzGood 5s
+CRASH    ./. FuzzBad  1.2s testdata/fuzz/FuzzBad/6f1c...
+DEADLINE ./. FuzzSlow 30.4s (exit status 1; log …/root-FuzzSlow.log)
+3 targets: 1 PASS, 0 FAIL, 1 CRASH, 1 DEADLINE
 ```
 
-Exit status: `0` every target passed, `1` at least one `FAIL` or `CRASH`, `2` the run
-could not be made (no `go.mod`, no targets, `go` missing, bad flags, unreadable load
-with `--max-load`).
+Exit status: `0` every target passed or reached the deadline, `1` at least one
+`FAIL` or `CRASH`, `2` the run could not be made (no `go.mod`, no targets, `go`
+missing, bad flags, unreadable load with `--max-load`).
+
+⛔ Before v0.7.0 the deadline was a `FAIL`, so exit 1 could not tell a crash from
+weather and a lane using `run` had to choose between going red on the deadline and
+tolerating exit 1 — which keeps it green on a real crasher. A lane that wanted "a
+crash is red, a deadline warns" had to keep its own shell loop (go-crdt/crdt#184
+is that case). The `DEADLINE` count is appended after `CRASH`, so a parser of the
+older line keeps reading it.
 
 ## `fuzzrun audit` {#audit}
 

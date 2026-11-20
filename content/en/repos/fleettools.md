@@ -9,7 +9,8 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.128.0** (`62dadb3`, 2026-11-16, measured the same day). The prose below was
+**v0.141.0** (`a57b2c0`, 2026-11-20, measured the same day — read with
+`git rev-parse v0.141.0^{commit}` and `go list -m …@latest`, which agree). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections and the
 `modtidy` section at the end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept
@@ -26,9 +27,10 @@ tools, at a tag (`go install github.com/go-fleettools/fleettools/cmd/vulngate@v0
 
 ## The commands {#commands}
 
-**101 directories under `cmd/`**, each with a `main.go` (counted 2026-11-19 with
-`git ls-tree -d cmd/` on `85ef23c`, which is main and is the merge commit of
-[#367](https://github.com/go-fleettools/fleettools/pull/367); it was 94 on
+**102 directories under `cmd/`**, each with a `main.go` (counted 2026-11-20 with
+`git ls-tree -d cmd/` on `a57b2c0`, which is the released head of v0.141.0; it
+was 101 on 2026-11-19 at `85ef23c`, the merge commit of
+[#367](https://github.com/go-fleettools/fleettools/pull/367), 94 on
 2026-11-16 at `62dadb3` for v0.128.0, 88 on 2026-11-15 at `a67ac44`, 86 earlier that day on
 `4235455`, 79 on 2026-11-10 at `69b51b87` for v0.104.0, 72 on 2026-11-09 at
 `5d0fae1` for v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
@@ -40,13 +42,20 @@ docscheck docsversions docsym editurl failset flagcensus flakescan fleetverbs gh
 ghpr ghrel ghrepo ghrun glmerge gofloor gopin
 gorequires gotest gvlscan hostload i18ncheck judgescan landingkitdist landingmigrate
 landingorgs landingrollout landingrollsum langcheck
-linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modrename modtidy needread
+linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modelgate modrename modtidy needread
 openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
 prscan pullresidue qemufix quietscan ratewait recur redscan relverify replystamp runson secondorigin
 sitelinks sitemigrate staleref symfind tagcells tagscan testscan testtime testwhy tinydur
 treecmp truncspill unarc viaonly vmkey vscan vulngate vulnscan waitload wasmsize wfaudit
 ```
+
+The one added since the 101 is `modelgate`
+([#368](https://github.com/go-fleettools/fleettools/pull/368), 2026-11-20, by
+another session; *"refuse a sub-agent launched with the wrong model"*), named by
+`git log --diff-filter=A 85ef23c..v0.141.0 -- 'cmd/*/main.go'` — 101 + 1 = 102 —
+and, like the six below it, named and not described: its code was not read for
+this page.
 
 The seven added since the 94 are named the same way, by
 `git log --diff-filter=A 62dadb3..85ef23c -- 'cmd/*/main.go'`, and the
@@ -114,7 +123,8 @@ expectation that had moved with the defect. A `+ unit - 1` ceil also overflows
 longest wait askable into an instant refusal.
 
 `flakescan` (merged 2026-11-19 in
-[#367](https://github.com/go-fleettools/fleettools/pull/367)) counts how often a
+[#367](https://github.com/go-fleettools/fleettools/pull/367), released in
+v0.141.0) counts how often a
 **named test** has failed across a repository's CI history, by lane, with a
 denominator. It exists because go-crdt/collab#204, one flake, had its sweep done
 by hand three times over three populations — commits on `main`, *red* runs on
