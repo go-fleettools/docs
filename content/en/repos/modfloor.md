@@ -64,6 +64,37 @@ missing until v0.5.0. `remote.origin.url` answers "whose repository is this", no
 own path — `github.com/<owner>/<name>`, or a subdirectory or `/v2` of it — is set
 aside as `published by another project`.
 
+⛔ And **a module we publish is still not one anybody installs** — the third half,
+added in v0.13.0. A Hugo landing site is a module with no Go packages: its `go.mod`
+exists only to pin a theme module, and nobody runs
+`go install github.com/<org>/<org>.github.io`, so its floor binds no consumer. The
+verdict was *correct on its own terms and unusable*, which is how a column teaches
+its reader to skim. A module whose own tree holds no `.go` file an ordinary build
+could compile is set aside as `with no buildable Go package`.
+
+Measured on 2026-11-21 over the local clones, offline, against floor 1.27.4, with
+the check and without it:
+
+```text
+without:  12067 go.mod seen, 1253 kept    ok=428  BELOW=825
+with:     12064 go.mod seen,  914 kept    ok=100  BELOW=814
+```
+
+339 modules left the population and **only 11 of them were exposures**. The other
+328 were *clean*: landing sites are renovated like everything else, so the fleet's
+compliance read **34 % clean** (428 of 1253) when it was **11 %** (100 of 914).
+Setting them aside took a flattering numerator out of the clean column, not only
+noise out of the exposure one.
+
+⛔ **The test is the packages, never the name.** `go-pkgx/go-pkgx.github.io` ships
+four Go modules under `tools/`, so a rule keyed on `*.github.io` would exempt real
+code — a false clean rather than noise. A file counts when **some** ordinary
+configuration compiles it: `//go:build windows` counts, `foo_arm64.go` counts,
+`//go:build tools` does not, and `//go:build !windows` counts even though evaluating
+it once with `windows` true says otherwise. The standard-tag set is checked against
+`go tool dist list`, because a GOOS missing from it would make a module leave the
+population silently.
+
 Two traps it encodes: `go/version` accepts `go27.2` (a typo that compares above every
 real version), so the floor is validated; and `modfile.ParseLax` does not fill
 `File.Toolchain`, so the directive is recovered from the syntax tree.
