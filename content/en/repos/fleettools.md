@@ -9,8 +9,8 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.156.0** (`b889445`, read on 2026-11-22 with
-`git ls-remote --tags … refs/tags/v0.156.0`, which is also how `tagcells` resolves it —
+**v0.161.0** (`740afd7`, read on 2026-11-22 with
+`git ls-remote --tags … refs/tags/v0.161.0`, which is also how `tagcells` resolves it —
 the commit is read from the tag, never carried over from the previous one). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections and the
 `modtidy` section at the end written from the change itself — the command inventory under `cmd/`,
@@ -37,19 +37,29 @@ was 101 on 2026-11-19 at `85ef23c`, the merge commit of
 `5d0fae1` for v0.94.0, 65 on 2026-11-07 at `06dfd81`, and 64 at v0.81.2):
 
 ```text
-abbench acdefault aptneed binnames blobpurge branchscan brandcheck brief buildscan
-buildtag bzcomment clonescan copycheck covblocks cronscan diffrefs docmd docscan
-docscheck docsversions docsym editurl failset flagcensus flakescan fleetverbs ghissue
-ghpr ghrel ghrepo ghrun glmerge gofloor gopin
-gorequires gotest gvlscan hostload i18ncheck judgescan landingkitdist landingmigrate
-landingorgs landingrollout landingrollsum langcheck
+abbench acdefault actionpin aptneed archrun binnames blobpurge branchscan brandcheck
+brief buildscan buildtag bzcomment clonescan copycheck covblocks cronscan ctxgate
+dashfix declines diffrefs docmd docscan docscheck docsversions docsym editurl envcheck
+failset flagcensus flakescan fleetverbs ghadvisory ghissue ghpr ghrel ghrepo ghrun
+glmerge gofloor gopin gorequires gotest gvlscan handlayout hostload i18ncheck judgescan
+landingkitdist landingmigrate landingorgs landingrollout landingrollsum langcheck
 linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modelgate modrename modtidy needread
-openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
+openfixed orgfile osvm pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
-prscan pullresidue qemufix quietscan ratewait recur redscan relverify replystamp runson secondorigin secretscan
-sitelinks sitemigrate staleref symfind tagcells tagscan testscan testtime testwhy tinydur
-treecmp truncspill unarc viaonly vmkey vscan vulngate vulnscan waitload wasmsize wfaudit
+prscan pullresidue qemufix quietscan ratewait recur redscan relverify renovatedup
+replystamp runson secondorigin secretscan sitelinks sitemigrate staleref symfind tagcells
+tagscan testscan testtime testwhy tinydur treecmp truncspill unarc viaonly vmkey vscan
+vulngate vulnscan waitload wasmsize wfaudit
 ```
+
+⚠ The list above was re-read on 2026-11-22 from
+`git ls-tree -d --name-only v0.161.0 cmd/`, name by name. The **count** in the
+first sentence was NOT re-taken with it: no program compared the two this time, so
+the 102 stays dated 2026-11-20 rather than being replaced by a number counted by eye.
+Eleven names were missing from the previous list and are added here: `actionpin`,
+`archrun`, `ctxgate`, `dashfix`, `declines`, `envcheck`, `ghadvisory`, `handlayout`,
+`orgfile`, `osvm` and `renovatedup`. Apart from `renovatedup`, which is described
+below, they are named and not described.
 
 The one added since the 101 is `modelgate`
 ([#368](https://github.com/go-fleettools/fleettools/pull/368), 2026-11-20, by
@@ -184,6 +194,23 @@ clean. `secretscan repo [--waive "<reason>"] [--all] CLONE` is the gate for one
 repository (exit 1 on a plaintext input of a daemon). A flow into `os.Open` or a
 `*From` reader is not followed, and a `main` that only calls a library server is
 found through its unit file or not at all.
+
+`renovatedup` (v0.159.0; its GraphQL budget guard in v0.161.0) finds the
+repositories that apply their organisation's Renovate preset **twice**. When
+`<org>/.github/config.js` sets `inheritConfig`, Renovate merges the inherited file
+into every repository and then also reads the repository's own config, so a
+`renovate.json` whose `extends` names that same file registers every custom manager
+twice (measured on go-crdt, go-crdt/.github#45: the dashboards went from `regex (4)`
+to `(2)` once the stubs were removed). `renovatedup [--orgs ORG,...]` reads each
+organisation in **one GraphQL query per 100 repositories**, with the `.github`
+`config.js` and every candidate config file in Renovate's search order, and reports
+`STUB` (the file holds only that `extends`: remove the file), `MIXED` (other rules
+too: remove only the entry) or `UNREAD` (a JSON5, truncated or unparsable file, or
+a failed organisation query). Exit 0 is clean, 1 a duplicate, 2 something unread,
+and 2 outranks 1. Measured with v0.161.0 on 2026-11-22: go-crdt 1 STUB
+(`go-crdt/brand`, a recorded exception), go-composites 34 STUB out of 34
+repositories. Since v0.161.0 the shared budget guard charges a GraphQL call to the
+GraphQL budget, so the sweep still runs when the REST budget is spent.
 
 The two added since the 86, both on 2026-11-15, are `editurl` and `recur`.
 `editurl` asks whether a Hextra site's *"Edit this page on GitHub"* link reaches
