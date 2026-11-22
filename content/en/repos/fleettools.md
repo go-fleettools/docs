@@ -449,15 +449,44 @@ request already addressed**, so they can be closed. For each owner it searches o
 issues (the ones with a closing reference, `linked:pr`, first) and reads each issue's
 timeline once. **CLOSABLE** means a merged pull request referenced the issue with a
 closing keyword (or the timeline records it as *connected*) yet it is open; **REVIEW**
-means a merged pull request mentioned it without a keyword, or the issue was reopened
-after the merge, so a person decides. Issues whose pull requests are all unmerged are
-not listed. The report states its denominator per owner (issues searched, timelines
-read, issues skipped and why) and exits 2 if anything was skipped: a scan that could
-not read is never reported as zero. It is a dry run by default; `--close` closes only
-CLOSABLE issues, with a comment naming the pull request, and never a REVIEW one. It
-stops before the REST budget falls under `--margin` (default 1000) so the fleet's
-Renovate runners are not starved, and it paces the search API. Written against GitHub's
-documented search qualifiers, the issue timeline events and the closing-keyword rules.
+means a merged pull request mentioned it with *no* keyword at all, or the issue was
+reopened after the merge, so a person decides; **REFS** means a merged pull request
+wrote `Refs` (or `Ref`), which says the issue stays open **on purpose**. Issues whose
+pull requests are all unmerged are not listed. The report states its denominator per
+owner (issues searched, timelines read, issues skipped and why) and exits 2 if anything
+was skipped: a scan that could not read is never reported as zero. It is a dry run by
+default; `--close` closes only CLOSABLE issues, with a comment naming the pull request,
+and never a REVIEW or REFS one. It stops before the REST budget falls under `--margin`
+(default 1000) so the fleet's Renovate runners are not starved, and it paces the search
+API. Written against GitHub's documented search qualifiers, the issue timeline events
+and the closing-keyword rules.
+
+### Why REFS is a third word and not a flag {#openfixed-refs}
+
+Until 2026-11-22, REVIEW meant two unrelated things: *nobody has said what becomes of
+this issue* and *somebody said, in writing, that it stays open*. The fleet-wide merge rule made the second one **mandatory** — `ghmerge` refuses
+a merge whose body mentions an issue and classifies it as neither closed nor kept — so
+every correctly written `Refs #N` became permanent REVIEW output. One organisation's
+REVIEW held **37 of its 64 open issues**, in a bucket whose name means *a person
+decides*, and nobody reads such a bucket (go-fleettools/fleettools#204).
+
+A REFS row is still **printed**, because an author can write `Refs` and be wrong, and
+an issue reopened after the merge still deserves a look. What changed is that it is
+counted apart and sorted **last**, after the rows that still need a decision — the
+order carries the meaning, and it is the only part of this that no count could hold: a
+hand-applied mutation swapping the two ranks left every total correct and moved only
+the order, and exactly one assertion went red.
+
+⛔ **`See #N` is not one.** The gate's keywords are close/fix/resolve and `ref(s)`, and
+`see #12` is the phrasing the merge gate exists to refuse — it reads as a decision and
+is not one. The issue asked for `Refs` and `See` to be read alike; doing that would
+have silenced the audit for exactly the sentence the fleet rejects at merge time. Both
+spellings are negative controls in the test table now.
+
+⛔ **The reading is the merge gate's own parser**, `issuegate.Parse`, which answers
+*closes*, *refs* or *bare* in one call. A private second regexp for `Refs` would be a
+new way for the audit and the gate to disagree — which is how a heading
+“## Also filed, not fixed” once bound to a reference two lines below it.
 
 ## `privscan`: a tool and a door against publishing a private file system {#privscan}
 
