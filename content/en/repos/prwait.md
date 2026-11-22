@@ -8,8 +8,8 @@ weight: 40
 Wait until a pull request's checks are finished, and **refuse to call an empty check
 list a pass** — or a complete, all-green one, when a workflow run for the same commit
 is red. [Repository →](https://github.com/go-fleettools/prwait) Latest tag:
-**v0.14.0** (`git ls-remote --tags`, 2026-11-22); this page is written from its
-README at **v0.14.0**, and the two are stated separately on purpose: *which tag is
+**v0.15.0** (`git ls-remote --tags`, 2026-11-22); this page is written from its
+README at **v0.15.0**, and the two are stated separately on purpose: *which tag is
 current* and *which tag this page describes* are different facts.
 
 ```console
@@ -56,7 +56,7 @@ prwait [-repo OWNER/REPO] [flags] <pr>...
 | Flag | Default | |
 | --- | --- | --- |
 | `-repo` | | repository for bare numbers |
-| `-interval` | `45s` × targets, capped at `5m` | how often to ask — see [the cost of a poll](#cost); given explicitly, it is used as typed and never scaled |
+| `-interval` | `45s` × every target this **user** is waiting on, capped at `5m` | how often to ask — see [the cost of a poll](#cost) and [per user, not per process](#per-user); given explicitly, it is used as typed and never scaled |
 | `-timeout` | `30m` | give up after this, per run |
 | `-min-checks` | `1` | how many checks must **exist** before a pass is possible |
 | `-gh` | `gh` | the `gh` binary to ask |
@@ -255,3 +255,42 @@ told about is one nobody can act on.
 ⛔ **An explicit `-interval` is never scaled.** A caller who names one has said what they
 want of the budget, and silently multiplying it would make the flag mean something other
 than what it reads — the same defect as the unscaled default, with the sign reversed.
+
+## A budget that is per user cannot be paced per process {#per-user}
+
+Since **v0.15.0**. Scaling one wait's interval by its own targets is right and was
+not enough: the incident that emptied the quota was four *processes*, one per pull
+request, each pacing itself perfectly for the one target it knew about. The
+counter GitHub keeps is per **user**, so that is the granularity the pacing has to
+use.
+
+A wait therefore records itself in `<user cache>/prwait/waits.json` — per user by
+construction — and counts the targets the other live waits are already polling
+into its own interval:
+
+```console
+$ prwait -repo go-x/y 82
+prwait: 2 other wait(s) of this user are already polling 4 target(s) (pid 32374, started 4s ago, 3 target(s): go-x/y#78 go-x/y#79 go-x/y#80) (pid 32687, started 2s ago, 1 target(s): go-tex/engine#906) — the REST budget is per USER, shared with every session here and with Renovate, so one wait can take every target.
+prwait: pacing this wait for 5 target(s) in all (1 here, 4 elsewhere), so the interval is 3m45s rather than 45s. -interval overrides this.
+```
+
+Four single-target waits now cost what one four-target wait costs. Measured on
+2026-11-22, minutes after the release, the registry on one workstation held
+**eight live waits from eight different sessions**, each on a single pull request
+of a different repository — the incident's own shape, now visible and paced.
+
+**It warns and paces; it does not refuse.** With about twenty-five sessions
+sharing a machine, one thirty-minute wait that locked the others out of the only
+tool they are told to wait with would be switched off — by a flag, or by going
+back to `gh pr checks --watch`, which is the defect this tool exists to prevent.
+
+**And nothing about the bookkeeping can fail a wait.** No cache directory, an
+unreadable file, a lock left behind by a killed wait: each is a line printed
+beside the verdict, never an exit status. An entry is dropped when its deadline
+has passed **or** when its process is gone — and *"the process is gone"* may only
+ever drop an entry the deadline would have kept, so a platform that cannot answer
+it says **"cannot tell"**, never "dead". A wrong "false" there would quietly empty
+the registry and restore the per-process pacing; a wrong "true" only paces one
+wait conservatively until a deadline passes. A non-positive pid is a separate
+question — a malformed *entry*, not a dead process — so it is dropped on every
+platform, including those where liveness is unknowable.

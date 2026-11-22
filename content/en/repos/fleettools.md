@@ -9,8 +9,9 @@ Sweeps across about 1800 repositories and about 320 organisations: which default
 branches are red, which runners stopped or run and fail, which modules are ahead of
 their tag, which foreign judges the CI never installs, and which tests exist without
 ever running. [Repository →](https://github.com/go-fleettools/fleettools) Latest tag:
-**v0.141.0** (`a57b2c0`, 2026-11-20, measured the same day — read with
-`git rev-parse v0.141.0^{commit}` and `go list -m …@latest`, which agree). The prose below was
+**v0.154.0** (`6abde5b`, read on 2026-11-22 with
+`git ls-remote --tags … refs/tags/v0.154.0`, which is also how `tagcells` resolves it —
+the commit is read from the tag, never carried over from the previous one). The prose below was
 written from the repository at **v0.67.0**, plus the two v0.82.x sections and the
 `modtidy` section at the end written from the change itself — the command inventory under `cmd/`,
 the README's own sections, and each new command's doc comment — and the two are kept

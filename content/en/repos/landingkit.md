@@ -8,7 +8,7 @@ weight: 20
 The go-* landing pages' shared design, as a **Hugo module**, and the command that
 derives a landing's brand from its logo and checks a landing against the reference.
 [Repository →](https://github.com/go-fleettools/landingkit) Latest tag:
-**v0.34.0** (`git ls-remote --tags`, 2026-11-15); this page is written from its
+**v0.38.0** (`git ls-remote --tags`, 2026-11-22); this page is written from its
 README at **v0.12.0**, and the two are stated separately on purpose: *which tag is
 current* and *which tag this page describes* are different facts. The landing of this
 very organisation uses it.
