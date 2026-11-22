@@ -46,7 +46,7 @@ landingorgs landingrollout landingrollsum langcheck
 linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modelgate modrename modtidy needread
 openfixed pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
-prscan pullresidue qemufix quietscan ratewait recur redscan relverify replystamp runson secondorigin
+prscan pullresidue qemufix quietscan ratewait recur redscan relverify replystamp runson secondorigin secretscan
 sitelinks sitemigrate staleref symfind tagcells tagscan testscan testtime testwhy tinydur
 treecmp truncspill unarc viaonly vmkey vscan vulngate vulnscan waitload wasmsize wfaudit
 ```
@@ -167,6 +167,23 @@ already recorded and no fourth, with one listing unread and named. ⛔ Its
 mutation sweep found the suite reaching the **real GitHub** for 4 min 25 s with
 a refusal deleted, because the flag table's only protection from the network was
 the guard under test; the reader is a variable the tests replace now.
+
+`secretscan` (v0.157.0) finds the daemons that take a secret as a **plaintext
+value**: a config-struct field, a cobra or pflag flag, an `os.Getenv` name, a
+systemd `Environment=` or `ExecStart` flag, a launchd plist, instead of by
+reference (a go-authn/secretsource `*_from` such as `systemd-creds:name`). A
+name is judged by its words, never a substring: `token_file` is a path,
+`password_from` a reference, `max_tokens` and `key_file` are not secrets, and a
+flag whose default is a path (`~/.github-token`) or whose usage says file or
+path is a path. `secretscan sweep --root <dir> --json out.json --md out.md`
+reads every clone, opens its report with the denominator (clones seen, read,
+skipped; files read, unread), counts daemons and findings per repository by
+canonical origin URL so the worktrees of one repository count once, and exits 2
+when anything was skipped or unreadable: an unread clone is NOT READ, never
+clean. `secretscan repo [--waive "<reason>"] [--all] CLONE` is the gate for one
+repository (exit 1 on a plaintext input of a daemon). A flow into `os.Open` or a
+`*From` reader is not followed, and a `main` that only calls a library server is
+found through its unit file or not at all.
 
 The two added since the 86, both on 2026-11-15, are `editurl` and `recur`.
 `editurl` asks whether a Hextra site's *"Edit this page on GitHub"* link reaches
