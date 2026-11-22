@@ -8,8 +8,8 @@ weight: 40
 Wait until a pull request's checks are finished, and **refuse to call an empty check
 list a pass** — or a complete, all-green one, when a workflow run for the same commit
 is red. [Repository →](https://github.com/go-fleettools/prwait) Latest tag:
-**v0.13.0** (`git ls-remote --tags`, 2026-11-22); this page is written from its
-README at **v0.13.0**, and the two are stated separately on purpose: *which tag is
+**v0.14.0** (`git ls-remote --tags`, 2026-11-22); this page is written from its
+README at **v0.14.0**, and the two are stated separately on purpose: *which tag is
 current* and *which tag this page describes* are different facts.
 
 ```console
@@ -56,7 +56,7 @@ prwait [-repo OWNER/REPO] [flags] <pr>...
 | Flag | Default | |
 | --- | --- | --- |
 | `-repo` | | repository for bare numbers |
-| `-interval` | `45s` | how often to ask |
+| `-interval` | `45s` × targets, capped at `5m` | how often to ask — see [the cost of a poll](#cost); given explicitly, it is used as typed and never scaled |
 | `-timeout` | `30m` | give up after this, per run |
 | `-min-checks` | `1` | how many checks must **exist** before a pass is possible |
 | `-gh` | `gh` | the `gh` binary to ask |
@@ -216,3 +216,42 @@ quota now gets its own classification, its own hold, and its own exit status:
 ⚠ `GET /rate_limit` is free of the *primary* limit only — *"Calling this endpoint does not
 count against your primary rate limit, but it can count against your secondary rate
 limit"* — so it is read once before the wait and once per refusal, never per poll.
+
+## What a poll costs, and why the default interval grows {#cost}
+
+`-interval` reads as *how often to ask*. It is really *how much of a shared budget to
+spend*, because a poll reads **every** target: `prwait -repo O/R 78 79 80 82` costs
+exactly what four separate `prwait` processes cost. That is how the quota above reached
+zero — one session, four waits, each at a 45-second default that was written for one
+target (v0.14.0):
+
+| Target | GraphQL | REST |
+| --- | --- | --- |
+| a pull request or a `@branch` | 1 — the check list (`statusCheckRollup` exists only in GitHub's GraphQL schema) | 1 — the head commit's workflow runs (`actions/runs?head_sha=`) |
+| a `!run` | 0 | 1, and no runs are read: a run target already **is** a run |
+
+⚠ **The two budgets are separate and are never summed**: 5000 REST calls an hour and 5000
+GraphQL points, either of which can be spent while the other is untouched. The scaling
+below is set by the REST half, because that is the half that was measured at zero.
+
+So the default is `45s` **per target**, capped at `5m`, which holds the hourly cost of a
+wait at roughly what one target costs instead of multiplying it:
+
+The reason is printed to stderr before the first call is spent, because a default that
+silently differs from the documented 45 s is a tool lying quietly:
+
+```console
+$ prwait -repo go-pkgx/pkgx 82 83 84
+prwait: 3 targets, so the default interval is 2m15s rather than 45s — one poll spends one REST call per target (the head commit's workflow runs), and that budget is per USER, shared by every session here, Renovate included. -interval overrides this.
+…
+```
+
+The cap is a deliberate choice of a human-usable interval over a constant budget: at 20
+targets, linear growth would put 15 minutes between polls, so a verdict ready at minute 1
+would arrive at minute 15 and the wait would read as a hang. Past the cap the cost is
+**stated** rather than held, with the figure it actually spends — a trade-off nobody is
+told about is one nobody can act on.
+
+⛔ **An explicit `-interval` is never scaled.** A caller who names one has said what they
+want of the budget, and silently multiplying it would make the flag mean something other
+than what it reads — the same defect as the unscaled default, with the sign reversed.
