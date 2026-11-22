@@ -7,9 +7,10 @@ weight: 30
 
 **Prove that a test can fail.** Apply one exact source mutation, run the suite,
 restore whatever happens, and exit 0 only when the suite went **red**.
-[Repository →](https://github.com/go-fleettools/mutate) Latest tag: **v0.13.0**
-(`git ls-remote --tags`, 2026-11-22); this page is written from its README at
-**v0.13.0**, and the two are stated separately on purpose — *which tag is current*
+[Repository →](https://github.com/go-fleettools/mutate) Latest tag: **v0.14.0**
+(`git ls-remote --tags`, 2026-11-22 23:49 CET, released at `7823efba` — the
+merge commit of #36, CI green on `main`); this page is written from its README at
+**v0.14.0**, and the two are stated separately on purpose — *which tag is current*
 and *which tag this page describes* are different facts, and writing one where the
 other belongs is how a page comes to assert a version nobody checked it against.
 It has no dependency beyond the standard library.
@@ -80,6 +81,82 @@ change that enlarges the table makes the mutant survive, silently. So a red suit
 read once more, from `go test -json` events, and a panic-only red is given its own
 verdict and listed among the things nothing holds.
 
+⛔ **And that verdict used to move with the wording of a message.** A panic was any
+line containing `panic:` followed, at any distance, by the runtime's `goroutine N
+[state]:` header. So a decline test that reports a *recovered* crash — which is the
+ordinary shape of a test written to hold a nil check —
+
+```go
+t.Errorf("empty: %v, want an error wrapping ErrMalformed", err) // err wraps "panic: runtime error: …"
+```
+
+tainted **its own** test, its assertion lines were discarded, and a guard held *by an
+assertion* was certified `caught by PANIC`: the verdict whose meaning is *this red is
+luck*. Measured on `go-pdfkit/reader` `signature.go:69`: rewording that helper from
+`panic: %v` to `crashed (recovered): %v`, with no change to what the test asserts,
+turned the same sweep into `caught`. ⭐ A verdict that moves with the wording of a
+message is not a measurement.
+
+The rule now: **an assertion line is never the start of a panic.** The runtime prints
+`panic: …` at **column 0**; `t.Error` and `t.Fatal` print an *indented* source
+position, so the line's own prefix states who printed it, and *"ambiguity resolves to
+PANIC"* has no ambiguity to resolve. The control on the other side is a fixture whose
+panic *value* prints an assertion-looking line: its `panic:` sits at column 0 on the
+line before, so it is still a panic.
+
+#### A verdict line with no name is not a verdict {#nameless}
+
+⛔ **A real panic read as `caught` — because of a line testify prints.** The reader
+that turns go test's plain output into verdicts had an arm for `--- PASS:` and
+`--- SKIP:` that matched the prefix `--- ` and took the test's name from after the
+colon:
+
+```go
+test = firstField(trimmed[strings.IndexByte(trimmed, ':')+1:])
+passed[testKey{pkg, test}] = true
+```
+
+`IndexByte` answers **-1** when the byte is absent, and `-1+1 == 0` is a perfectly
+valid index, so with no colon the slice silently became *the whole line*. Two
+ordinary inputs arrive that way:
+
+| input | what it did |
+| --- | --- |
+| `--- Expected` | registered a test **named `---`** as having **passed**, and filed every later line under it — the panic included. |
+| `--- FAIL:` truncated | the FAIL arm needs the trailing space of `"--- FAIL: "`, so a cut line fell through here and marked a **failing** test as passed, under the *empty* name — the exact key the panic rule asks before deciding that a panic belongs to no test. |
+
+`--- Expected` is not a contrived string: it is what **every failed testify
+`assert.Equal` prints**. testify sets difflib's `FromFile` to `"Expected"`
+(`assert/assertions.go:1965` at v1.12.1, unchanged back to v1.3.0) and difflib
+writes it as `--- %s` (`difflib.go:589`). Measured through `classify`:
+
+```text
+before: "caught"           passed = map[{p0 ---}:true {p0 TestDecode}:false]
+after:  "caught by PANIC"  passed = map[{p0 TestDecode}:false]
+```
+
+Both arms now require a non-empty name, and an unrecognised `--- ` line leaves the
+current test **unchanged** rather than clearing it: such a line is something a test
+*printed*, so what follows still belongs to that test — which is also the safe
+direction, since the lines of a test that panicked are never read as assertions.
+
+⭐ **A prefix is not a grammar, and fixtures are imagined input.** The unit suite and
+the end-to-end selfcheck on three operating systems were **green** on both inputs,
+because no one had thought to write them. What found it is a property, stated as an
+invariant over the structure the rule later trusts — *no verdict is ever recorded
+about a test with no name* — and it took **15.56 s**:
+
+```bash
+go test -run xxx -fuzz FuzzClassify ./mutsweep/
+go test -run xxx -fuzz FuzzReadersKeepAVerdictAboutATest ./mutsweep/
+```
+
+The targets deliberately assert **no verdict**. A fuzzer has no oracle for *"is this
+red a panic"*, and writing one would mean reimplementing the rule beside itself, so
+the two would agree by construction and measure nothing; the fixtures that run the
+real `go` tool are that half. Reduced crashers are committed under
+`mutsweep/testdata/fuzz/`, so they replay in a plain `go test`.
+
 ### Answering a report: `-only` {#only}
 
 After a sweep, tests are written for the survivors, and the question becomes whether
@@ -116,6 +193,66 @@ fallback, "not a mutant" was often **half** of everything tried — 242 of 574 �
 11 refusals in one file read that way while being guards nothing tested. "Not a mutant"
 now means only that neither mutation compiles. `-mutate boundary` visits the conditions
 of init-clause `if`s too.
+
+### An `else` branch, and the `else if` nobody listed {#else}
+
+⛔⛔ An `if` that had an `else` was **excluded outright**, and an `else if` was never
+reached at all: it is **not an element of any statement list** — it lives in the `Else`
+field of the `if` before it — so a walk over statement lists sees its *body* and never
+its *condition*. Two different reasons, one symptom: not swept, not counted, not
+reported, so a package of `if`/`else` guards read as a **clean sweep about a shape the
+walk never looked at**.
+
+| shape | before | now |
+|---|---|---|
+| `if x > 0 { … }` | listed | listed |
+| `if v, ok := m[k]; ok { … }` | listed | listed |
+| `if x > 10 { … } else if x > 5 { … }` | **neither condition** | both |
+| `if x > 3 { … } else { … }` | **nothing** | listed |
+| the same two branches with no `else` | listed | listed |
+
+⭐ **The last two rows are the control**: the same condition, the same two branches,
+differing only by the `else`, and only one of them was swept. Without that pair, *"an
+`if` with an `else` is skipped"* and *"an `else if` condition is skipped"* are two
+readings of one symptom — and the first account of the finding named **neither**,
+blaming the init clause the section above had already fixed. The control was built
+before the tool was touched, which is the only reason that guess did not become the
+patch.
+
+Deletion is the wrong mutation here, which is most likely why the exclusion was
+written: deleting `if C { A } else { B }` removes *both* arms — the decision removed
+rather than the guard removed — and the suite would go red for a reason that says
+nothing about `C`. So the mutation is the `false && (C)` above: every arm stays
+compilable and the `else` arm runs unconditionally. It is primary when a refusal has an
+Init clause, **or** an `else`, **or is itself somebody's `else`**, and the third is not
+implied by the other two — the last link of a chain, `} else if x > 5 { return 1 }`,
+has neither an Init nor an `else` of its own, and deleting its bytes leaves a dangling
+`} else` that does not compile. What disqualifies deletion is **being** an `else`, not
+having one.
+
+#### A guard whose removal panics is a guard no test holds {#unholdable}
+
+Extracting that per-`if` collection into its own function made its two **rejection**
+sentences changed refusals, so [`-hook`](#hook) demanded a sweep of them — and both
+SURVIVED. Nothing in the suite had an `if` with a long body, and nothing had one that
+does not end in a `return`, so *"a refusal is a **short** body ending in a
+**return**"*, the definition the whole tool rests on, was asserted **nowhere**.
+
+⛔ One of the two could not be held by **any** assertion as it was written:
+
+```go
+if len(ifs.Body.List) == 0 || len(ifs.Body.List) > 3 { return nil }
+if _, isReturn := ifs.Body.List[len(ifs.Body.List)-1].(*ast.ReturnStmt); !isReturn { … }
+```
+
+Delete the first line and the second indexes `-1`: the suite is red by **panic**, which
+is the verdict this tool prints beside the survivors, because the line doing the
+catching is the one below and the next change that reorders them makes the same mutant
+survive in silence. There is **no test to write** for such a line — no input makes
+`List[-1]` fail by assertion. The answer is to restructure until the question has an
+answer a test can read: a last statement that is `nil` for an empty body, refused by
+the same `*ast.ReturnStmt` test as any other non-return. Identical behaviour for every
+input, one fewer guard, and both remaining bounds now caught by assertion.
 
 ### A sweep leaves a record, and `-hook` refuses a push no sweep covered {#hook}
 
