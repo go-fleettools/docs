@@ -1,0 +1,44 @@
+# Are the version numbers these pages state still the latest releases?
+#
+# Eleven of the thirteen pages under content/en/repos state a latest release of
+# the tool they document, and each is wrong the moment THAT tool is tagged.
+# Nothing in this repository moves when it happens, so nothing here can notice:
+# measured on 2026-11-22, content/en/repos/fleettools.md said v0.141.0 against
+# v0.154.0 released — thirteen minor releases went by without a word.
+#
+# ⛔ SO: NO `push` AND NO `pull_request`. A trigger that fires on a change would
+# paint a contributor's branch red for somebody else's release, in a repository
+# they did not touch — a gate nobody can keep green, and the first response to
+# one of those is to switch it off. A red scheduled run blocks no pull request
+# and no release: it is a standing question with an owner. This is the decision
+# left open in the 2026-11-16 hand-over note on this repository.
+#
+# ⛔ It needs NO secret, not even github.token: `tagcells` resolves each latest
+# release with `git ls-remote --tags`, so this spends nothing of the REST budget
+# every session and Renovate share — and a budget at zero cannot make the check
+# lie. It was at 0 of 5000 twice while this was being written. Report-only: a
+# lane that can rewrite the file it just judged is not a check. The fix is
+# `tagcells --org go-fleettools --write content/en/repos/*.md` on a branch.
+#
+# min-cells is the eleven claims these pages hold today, MEASURED on this tree
+# rather than copied from the landing's hugo.toml, which happens to hold eleven
+# too. ⛔ Without it the check cannot notice a claim DISAPPEARING: the refusal is
+# "did I read none at all?", which stays green while ten of eleven are read.
+# Adding or removing a repository page is then one line here, in the pull request
+# that adds or removes it.
+name: labels
+
+on:
+  schedule:
+    - cron: "47 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  current:
+    uses: go-fleettools/fleettools/.github/workflows/labels-current.yml@main
+    with:
+      files: content/en/repos/*.md
+      min-cells: 11
