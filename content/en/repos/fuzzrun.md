@@ -7,7 +7,7 @@ weight: 100
 
 Run every Go fuzz target of a module, in parallel within a load budget, and report
 crashers. [Repository →](https://github.com/go-fleettools/fuzzrun) Latest tag:
-**v0.8.0** (`go list -m -versions`, 2026-11-22). This page describes `wait` from
+**v0.9.0** (`go list -m -versions`, 2026-11-22). This page describes `wait` from
 the README at **v0.1.0**, `audit` from the README at **v0.8.0** and `run` from the
 README at **v0.7.0**,
 and the versions are stated separately on purpose: *which tag is current* and
