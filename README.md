@@ -19,12 +19,16 @@ To fix what it reports:
 tagcells --org go-fleettools --write content/en/repos/*.md
 ```
 
-**Read that diff before committing it.** It replaces the version *number* and
-nothing else, so a line that also names the tag's commit, or the command that
-read it, comes out of the rewrite stating the new number beside the old commit —
-and a page citing a commit reads as more sourced than one citing none. That is
-what happened to `fleettools.md:12` here; the commit and the command were
-corrected by hand.
+**Read that diff before committing it.** Up to `tagcells` v0.154.0 it replaced
+the version *number* and nothing else, so a line that also named the tag's
+commit, or the command that read it, came out of the rewrite stating the new
+number beside the old commit — and a page citing a commit reads as more sourced
+than one citing none. That is what happened to `fleettools.md:12` here; the
+commit and the command were corrected by hand, and the tool was fixed after
+(go-fleettools/fleettools#399):
+a claim is now moved whole — date, every occurrence of the tag, and the commit
+truncated to the width the page shows, never grown from a prefix — or refused
+whole and left visibly stale, which is exit 2 in report mode too.
 
 It is told how many claims these pages hold (`min-cells: 11`), because the
 refusal it would otherwise make is *"did I read none at all?"*, which stays green

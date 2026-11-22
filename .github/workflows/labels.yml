@@ -38,7 +38,12 @@ permissions:
 
 jobs:
   current:
-    uses: go-fleettools/fleettools/.github/workflows/labels-current.yml@main
+    # Pinned to the commit that merged the reusable workflow (go-fleettools/
+    # fleettools#396), read with `git rev-parse origin/main` after the merge and
+    # never retyped from a prefix. `actionpin` counts a `uses:` on a branch as
+    # unpinned, and it is right to: @main is whatever that branch holds the day
+    # this runs.
+    uses: go-fleettools/fleettools/.github/workflows/labels-current.yml@ce5270e49d726f572287a4901b8448d1dea7647e # main at the merge of #396
     with:
       files: content/en/repos/*.md
       min-cells: 11
