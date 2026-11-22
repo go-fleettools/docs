@@ -8,28 +8,29 @@ weight: 40
 Wait until a pull request's checks are finished, and **refuse to call an empty check
 list a pass** — or a complete, all-green one, when a workflow run for the same commit
 is red. [Repository →](https://github.com/go-fleettools/prwait) Latest tag:
-**v0.10.0** (`git ls-remote --tags`, 2026-11-15); this page is written from its
-README at **v0.7.0**, and the two are stated separately on purpose: *which tag is
+**v0.13.0** (`git ls-remote --tags`, 2026-11-22); this page is written from its
+README at **v0.13.0**, and the two are stated separately on purpose: *which tag is
 current* and *which tag this page describes* are different facts.
 
 ```console
 $ prwait -repo go-pkgx/pkgx 82 83
-go-pkgx/pkgx#82 PASS SUCCESS:24
-go-pkgx/pkgx#83 FAIL test (windows-latest)=FAILURE
+go-pkgx/pkgx#82 @4f1c2ab PASS SUCCESS:24
+go-pkgx/pkgx#83 @9d0e7f1 FAIL test (windows-latest)=FAILURE
 
 $ prwait go-pkgx/bk#311 go-pkgx/mirror#28
-go-pkgx/bk#311 FAIL CONFLICTING — rebase it; any green ticks it shows are from the old base
-go-pkgx/mirror#28 PASS SUCCESS:20 SKIPPED:1
+go-pkgx/bk#311 FAIL CONFLICTING (#311) — rebase it; any green ticks it shows are from the old base
+go-pkgx/mirror#28 @1b77c04 PASS SUCCESS:20 SKIPPED:1
 
 $ prwait -repo go-tex/go-tex.github.io 239
-go-tex/go-tex.github.io#239 FAIL playground (pull_request run)=FAILURE pages (pull_request run)=FAILURE
+go-tex/go-tex.github.io#239 @769bfee FAIL playground (pull_request run)=FAILURE pages (pull_request run)=FAILURE
 ```
 
 | Exit | Meaning |
 | --- | --- |
 | 0 | every pull request finished, with checks, and all of them acceptable |
-| 1 | one finished red, conflicts, was closed, or ran out of time |
+| 1 | one finished red, conflicts, was closed, moved, or ran out of time |
 | 2 | refused: bad usage, or an answer that could not be read |
+| 3 | the API quota stopped the wait: nothing was measured, nothing is claimed |
 
 ## Install {#install}
 
@@ -109,3 +110,109 @@ Three refinements the same measurement forced:
   that same commit a `workflow_dispatch` was green while the `pull_request` run was red —
   and that dispatch was started by hand to investigate the failure. A run started to look
   into a failure must not be able to clear it.
+
+## The verdict names the commit it judged {#named}
+
+Every verdict carries the head it was decided at (`@4f1c2ab` above), because a wait that
+began on one commit and a head it ended with are different pieces of work. A target with
+no commit to name — a conflicted pull request has no head to judge — prints none rather
+than an empty `@`.
+
+⛔ **And a head that moves mid-wait is refused, not followed** (v0.9.0). Naming the commit
+is necessary and not sufficient: a wait that silently re-points at a push the caller never
+asked about ends by printing a true statement about the wrong work.
+
+```console
+$ prwait -repo go-tex/engine 752
+go-tex/engine#752 MOVED @e87aa0a -> @2baff07 — the head changed while waiting; this wait judged neither, re-run against @2baff07
+```
+
+Neither commit was judged as a whole, so neither is reported as a verdict, and the exit
+status is `1`. It holds for a branch (`@main`) and a run as much as for a pull request — a
+release gate waiting on the default branch must not answer about a commit that arrived
+after the one it was asked about, or the tag lands on something nobody judged. A SHA that
+one poll could not read is **not** a move: a blank answer is weather, and the retry loop
+already covers it.
+
+## A `@branch` whose head is a conflicted pull request {#branch-conflict}
+
+GitHub runs `pull_request` workflows against `refs/pull/N/merge`, which does not exist
+while the merge cannot be computed — so a conflicted pull request has **no runs at all**,
+by construction. `prwait` has refused `CONFLICTING` before counting checks since its first
+release, but the branch form supplied a fabricated `mergeable: "MERGEABLE"` — right for a
+bare branch, which has nothing to merge into, and a lie when the branch is a pull
+request's head. The refusal was therefore unreachable from the form that avoids guessing a
+number, which is the form the fleet's own rule prescribes (fixed in v0.11.0).
+
+Measured 2026-11-18 on `go-zpkg/zpkb#505`: `TIMEOUT after 30m0s — 0 checks, want at least
+1`, then three retriggers spent on a dropped-dispatch theory — Actions enabled, all
+workflows `active`, repository public, githubstatus `operational` — while `gh pr view
+--json mergeable` answered `CONFLICTING` in one call. The refusal now names the pull
+request, because a reader told "CONFLICTING" about a *branch* has no way to know which one
+said so.
+
+⚠ The selection is by **head**, not by association: GitHub associates a commit with every
+pull request that contains it, so a branch cut from `main` is associated with whatever
+merged into `main`. Only a pull request whose `headRefName` is this branch says anything
+about what this branch would merge.
+
+## A red that can no longer be re-run says so {#rerun}
+
+Past GitHub's 30-day re-run window, `gh run rerun` answers `403 Unable to retry this
+workflow run because it was created over a month ago` — so the red is permanent where it
+stands, and the only way to a fresh verdict is a ref you control (v0.12.0).
+
+```console
+$ prwait -repo go-ansible/playbook 197
+go-ansible/playbook#197 @c5dd86d FAIL test (macos-latest)=FAILURE
+  ⛔ ci (pull_request run #412) was created 2026-10-12, 37 days ago: `gh run rerun` will answer 403 (GitHub allows a re-run for 30 days).
+     This red cannot be refreshed where it stands. Reproduce the lane locally if it names your platform, or put the commit on a ref you control — `git cherry-pick` onto a branch in this repository — and let CI judge it there.
+```
+
+That line exists because the question went unasked for ten days on that very pull request.
+It was handed back twice as *"blocked: three routes tried, all closed"* — and all three
+routes were ways to make **that** run go green, so they shared one premise and tested it
+once. Cherry-picked onto a branch in the target repository, the same commit came back
+**9/9 green, `macos-latest` included**: the red belonged to the stale base, not to the
+change.
+
+## And a rate limit is not a verdict {#quota}
+
+When GitHub refuses the call for the quota, nothing about the target was measured, so
+nothing is claimed about it (v0.13.0):
+
+```console
+$ prwait -repo go-embedded-julia/julia 78 79 80 82
+go-embedded-julia/julia#78 QUOTA — not a verdict: nothing about this target was measured.
+  ⛔ the per-user REST quota is spent (0 of 5000 left). It resets at 20:45 CET, in 38m12s.
+     The quota is per USER, not per token, so every session on this machine shares it — Renovate included.
+⛔ 4 target(s) got no verdict at all: …#78, …#79, …#80, …#82 — the quota stopped the wait before they were read.
+```
+
+Measured 2026-11-15: the account's REST quota hit zero twice in one day, and both times
+this tool printed the raw `gh: API rate limit exceeded … (HTTP 403)` *where its verdict
+goes*, under **exit 1 — the status of a red check**. A caller reading only the status took
+"nothing could be measured" for "the pull request is red", which is this tool's own defect
+wearing its least recognisable face: an **unread** answer presenting itself as a
+**negative** one.
+
+The retry made it worse. A failed query is weather here, so a quota was asked again three
+times at the poll interval — three more refusals, each spending a call against the very
+limit that was refusing. **Weather has no reset time; a quota has one, advertised.** So a
+quota now gets its own classification, its own hold, and its own exit status:
+
+- **Held for, when the reset fits.** The wait sleeps to the advertised reset and resumes.
+  Costs nothing, and keeps the verdict.
+- **Refused early, when it does not.** Spending the rest of the timeout to learn what
+  `/rate_limit` already said is how four calls bought one fact.
+- **A secondary limit is reported as a secondary limit.** `/rate_limit` cannot see it —
+  *"There is not a way to check the status of your secondary rate limit"* — so when GitHub
+  refuses for a rate limit while the instrument reports room, that is said in those words
+  and marked as **deduced**. No reset is ever borrowed from the primary limit to stand in
+  for one that does not exist.
+- **A measured red still outranks it.** If anything was actually read as failing, the
+  status stays `1`.
+
+⚠ `GET /rate_limit` is free of the *primary* limit only — *"Calling this endpoint does not
+count against your primary rate limit, but it can count against your secondary rate
+limit"* — so it is read once before the wait and once per refusal, never per poll.
