@@ -30,7 +30,7 @@ line, the page says that too.
 | [unbounded]({{< relref "repos/unbounded.md" >}}) | v0.2.0 | which repositories read a ZIP entry or decode an image without a ceiling |
 | [fleetfind]({{< relref "repos/fleetfind.md" >}}) | v0.4.0 | which repository already does this |
 | [landingdiff]({{< relref "repos/landingdiff.md" >}}) | v0.2.0 | which landing page is the odd one out |
-| [fuzzrun]({{< relref "repos/fuzzrun.md" >}}) | v0.1.0 | run every fuzz target of a module within a load budget |
+| [fuzzrun]({{< relref "repos/fuzzrun.md" >}}) | v0.8.0 | run every fuzz target of a module within a load budget, and audit which targets no workflow fuzzes |
 | [buildstamp]({{< relref "repos/buildstamp.md" >}}) | v0.1.0 | the Go build information of any binary, WebAssembly included, and whether it was built from a modified tree |
 | [.github]({{< relref "repos/dotgithub.md" >}}) | no tag | shared community health files, Renovate runner and preset |
 
