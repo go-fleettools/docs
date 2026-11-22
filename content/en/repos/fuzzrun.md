@@ -7,8 +7,8 @@ weight: 100
 
 Run every Go fuzz target of a module, in parallel within a load budget, and report
 crashers. [Repository →](https://github.com/go-fleettools/fuzzrun) Latest tag:
-**v0.7.1** (`go list -m -versions`, 2026-11-20). This page describes `wait` from
-the README at **v0.1.0**, `audit` from the README at **v0.7.1** and `run` from the
+**v0.8.0** (`go list -m -versions`, 2026-11-22). This page describes `wait` from
+the README at **v0.1.0**, `audit` from the README at **v0.8.0** and `run` from the
 README at **v0.7.0**,
 and the versions are stated separately on purpose: *which tag is current* and
 *which tag this page describes* are different facts. ⚠ The repository also has
@@ -125,14 +125,18 @@ crossed and a `NOTE` says so.
 
 A step the audit cannot read — a pattern the shell computes, `make fuzz`, a
 script, a `working-directory` — makes the uncovered targets `UNCERTAIN` instead
-of `GAP`, and they do not fail the audit.
+of `GAP`, and they do not fail the audit — unless **every** target is uncertain.
 
-Exit status: `0` everything covered or uncertain, `1` gaps or a blanket
-`continue-on-error`, `2` nothing could be read. ⚠ Note what `0` means when
-*every* target is uncertain: nothing was decided, and the summary's
-`0 without a workflow` is true and empty. go-fleettools/fuzzrun#14 raised
-whether that case should exit 2, as `wfaudit` and `redscan` do for a scan that
-read nothing; v0.6.0 did not change it.
+Exit status: `0` everything covered, or some covered and the rest uncertain, `1`
+gaps or a blanket `continue-on-error`, `2` nothing could be read, **including
+every target uncertain**. ⛔ Up to v0.7.2 that last case exited `0`: nothing
+was decided, the summary's `0 without a workflow` was true and empty, and a lane
+running the audit stayed green over a workflow it could not read — go-crdt/crdt's
+35 of 35 above. go-fleettools/fuzzrun#14 raised the question; since **v0.8.0**
+it is exit `2`, as `wfaudit` and `redscan` do for a scan that read nothing,
+because an answer not obtained is not a negative. A partly uncertain module still
+exits `0`: at least one target was read as covered, and the `UNCERTAIN` lines
+name the rest.
 
 ## `fuzzrun wait` {#wait}
 
