@@ -44,7 +44,7 @@ failset flagcensus flakescan fleetverbs ghadvisory ghissue ghpr ghrel ghrepo ghr
 glmerge gofloor gopin gorequires gotest gvlscan handlayout hostload i18ncheck judgescan
 landingkitdist landingmigrate landingorgs landingrollout landingrollsum langcheck
 linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modelgate modrename modtidy needread
-openfixed orgfile osvm pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
+openfixed orgedit orgfile osvm pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
 prscan pullresidue qemufix quietscan ratewait recur redscan relverify renovatedup
 replystamp runson secondorigin secretscan sitelinks sitemigrate staleref symfind tagcells
@@ -58,8 +58,9 @@ first sentence was NOT re-taken with it: no program compared the two this time, 
 the 102 stays dated 2026-11-20 rather than being replaced by a number counted by eye.
 Eleven names were missing from the previous list and are added here: `actionpin`,
 `archrun`, `ctxgate`, `dashfix`, `declines`, `envcheck`, `ghadvisory`, `handlayout`,
-`orgfile`, `osvm` and `renovatedup`. Apart from `renovatedup`, which is described
-below, they are named and not described.
+`orgfile`, `osvm` and `renovatedup`. Apart from `renovatedup`, `orgfile` and
+`orgedit` (added to the list since), which are described below, they are named and
+not described.
 
 The one added since the 101 is `modelgate`
 ([#368](https://github.com/go-fleettools/fleettools/pull/368), 2026-11-20, by
@@ -211,6 +212,40 @@ and 2 outranks 1. Measured with v0.161.0 on 2026-11-22: go-crdt 1 STUB
 (`go-crdt/brand`, a recorded exception), go-composites 34 STUB out of 34
 repositories. Since v0.161.0 the shared budget guard charges a GraphQL call to the
 GraphQL budget, so the sweep still runs when the REST budget is spent.
+
+`orgfile` (v0.156.0,
+[#401](https://github.com/go-fleettools/fleettools/pull/401)) reads **one file from
+each organisation's `.github` repository**, or from the first of `--repos` that
+has it, and says whether it contains each `--contains` string. GitHub code search
+does not index these files, so each is read through the REST contents endpoint,
+about one call per organisation. One verdict per organisation: `match` (every
+string present), `nomatch` (the line says which is absent), `nofile` (404 on every
+repository) or `unread` (any other status, **never read as `nofile`**). ⛔ It stops
+cleanly when REST remaining falls below `--reserve` (default 1000) and says every
+count is then a **floor**; a run that read nothing never prints a clean result.
+`--orgs` narrows, `--workers` sets concurrency, `--list` prints every
+organisation. Exit 0 every organisation read, 1 some unread or stopped at the
+reserve, 2 usage error or could not start.
+
+`orgedit` (v0.162.0, [#422](https://github.com/go-fleettools/fleettools/pull/422);
+resume fix in v0.163.0, [#424](https://github.com/go-fleettools/fleettools/pull/424))
+rolls **one literal replacement in one file** out to every organisation, as **one
+pull request per organisation**, merged only when CI is green. Its first use is
+[#305](https://github.com/go-fleettools/fleettools/issues/305): replacing
+`--package renovate@latest` with `--package renovate@44` in each organisation's
+`.github/workflows/ci.yml`. Per organisation the file is read once and judged
+`nofile`, `unchanged`, `skip` (it contains a `--skip-if` string) or `target`; any
+other answer is `unread`, counted and never read as `nofile`. A target is handled
+one at a time: the REST `--reserve` must hold and the trailing hour must have
+fewer than `--max` merged pull requests (default 20), or the run **stops**; a
+repository another session holds is skipped and listed; a leftover branch or an
+open pull request from an earlier run is **resumed, never doubled**; the pull
+request is opened, waited on with `prwait`, and merged with `ghmerge` only when
+the checks, read again against the pushed commit, are green. A red or
+inconclusive CI, a refused command, the reserve and the cap each stop the run, and
+nothing is retried another way. `--dry-run` reads only and prints each verdict
+with the diff size. Exit 0 every organisation read and every target merged or
+skipped, 1 a refusal, a red CI or an unread file, 2 usage error or a limit reached.
 
 The two added since the 86, both on 2026-11-15, are `editurl` and `recur`.
 `editurl` asks whether a Hextra site's *"Edit this page on GitHub"* link reaches
