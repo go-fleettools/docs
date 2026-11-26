@@ -47,7 +47,7 @@ linkcheck linkjobscan mantracheck mdpdf mkdocs2hextra modelgate modrename modtid
 openfixed orgedit orgfile osvm pagesbuild pagesbuildadd pagesbuildcampaign pagescheck pagespublish
 pagesretire pagetext paritycheck pinscan pngeq priorart privscan prmerge prrefresh
 prscan pullresidue qemufix quietscan ratewait recur redscan relverify renovatedup
-replystamp runson secondorigin secretscan sitelinks sitemigrate staleref symfind tagcells
+replystamp runson secondorigin secretscan sitelinks sitemigrate staleref statecheck symfind tagcells
 tagscan testscan testtime testwhy tinydur treecmp truncspill unarc viaonly vmkey vscan
 vulngate vulnscan waitload wasmsize wfaudit
 ```
@@ -258,6 +258,16 @@ repository that does not exist (`github.com/<org>/edit/…`), 7 name the
 organisation's *code* repository rather than its docs one, and 4 double the
 language (`…/content/en/en/page.md`). `recur` refuses to publish while a lesson
 that recorded a recurrence has no gate.
+
+`statecheck` (v0.177.0) is a Claude Code `Stop` hook for a reply that states the
+*current* state of an external system (a quota exhausted, an App installed, a
+runner blocked) or asks the user to change one, when no tool call of the turn
+read it: a note or a summary is history with no read time. Each refusal names
+the sentence and the read that would answer it; `statecheck sweep` replays the
+detector over old transcripts, which is how its false positives are counted
+(30 refusals over 21 052 replies, about a quarter of them false, measured
+2026-11-26) rather than believed. It has no entry in the count above, which
+was taken before it existed.
 
 The seven added since the 79 are `aptneed`, `failset`, `modtidy`, `paritycheck`,
 `replystamp`, `testwhy` and `tinydur`. Four of them are gates against a *rule
