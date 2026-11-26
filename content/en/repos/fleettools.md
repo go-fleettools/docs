@@ -266,8 +266,14 @@ read it: a note or a summary is history with no read time. Each refusal names
 the sentence and the read that would answer it; `statecheck sweep` replays the
 detector over old transcripts, which is how its false positives are counted
 (30 refusals over 21 052 replies, about a quarter of them false, measured
-2026-11-26) rather than believed. It has no entry in the count above, which
-was taken before it existed.
+2026-11-26) rather than believed. `statecheck --agent-hook` is the same rule as
+a `PreToolUse` hook on the `Agent` tool: it refuses a subagent brief that states
+a host's load or capacity as a fact, or asks for work sized to it, when no
+command of the turn probed that host (the incident was a brief that sized a
+build job from a remembered core count). `statecheck sweep --agents` replays it
+over old transcripts: 4 refusals over 4 145 briefs (0.1 %), measured
+2026-11-26. It has no entry in the count above, which was taken before it
+existed.
 
 The seven added since the 79 are `aptneed`, `failset`, `modtidy`, `paritycheck`,
 `replystamp`, `testwhy` and `tinydur`. Four of them are gates against a *rule
