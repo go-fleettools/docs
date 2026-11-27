@@ -69,6 +69,12 @@ another session; *"refuse a sub-agent launched with the wrong model"*), named by
 and, like the six below it, named and not described: its code was not read for
 this page.
 
+Since v0.179.0 `modelgate` also refuses an implementation brief that lacks a
+`bibliography:` line (what was read: specification, RFC, reference source) or a
+`prior-art:` line (what `priorart` found, across the fleet's organisations with
+`priorart -all-orgs`). Either line may be `none — <reason>`; the waiver is ledgered,
+not silent.
+
 The seven added since the 94 are named the same way, by
 `git log --diff-filter=A 62dadb3..85ef23c -- 'cmd/*/main.go'`, and the
 arithmetic reconciles — 94 + 7 = 101 — against the list above, which was
@@ -358,6 +364,17 @@ Grouped by the question they answer:
   refusal, which arrives as HTTP 200 with an `errors` array: read past that and a
   refused query becomes an empty branch list, which is a clean gate on a surface never
   read.
+
+  **`-all-orgs`** widens the question from one repository to the account. On
+  2026-11-26 a search of one repository could not see `cloud-boot/windows-image`,
+  `cloud-boot/iso` or `go-diskimages`, which already covered the subject. One call now
+  searches the tracker (open and closed) of every organisation the account belongs to
+  and reports per organisation: those with entries one by one, the clean ones in a
+  single line. The list is GitHub's `/user/orgs`, the one `-deps` already reads, rather
+  than a committed file, which would drift from the real fleet. Searches are spaced for
+  the search limit of 30 a minute. An organisation whose search failed is `NOT READ`,
+  and an unreadable or empty list is one surface not read: status 2, never "no
+  organisation has it". It combines with `-repo`.
 
   The search is **split at six terms**, because GitHub allows five `AND`/`OR`/`NOT`
   operators and seven OR-ed clauses answered HTTP 422 outright — so the subjects that
